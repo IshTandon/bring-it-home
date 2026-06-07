@@ -72,9 +72,7 @@ export default function PlayerGrid() {
   const filtered = useMemo(() => {
     let result = PLAYERS;
 
-    if (activeGroup === 'All') {
-      result = result.filter(p => !!p.apiId);
-    } else {
+    if (activeGroup !== 'All') {
       const group = POS_GROUPS.find(g => g.label === activeGroup);
       if (group) result = result.filter(p => group.positions.includes(p.pos));
     }

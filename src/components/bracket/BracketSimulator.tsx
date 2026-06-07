@@ -145,10 +145,11 @@ function Toast({ message }: { message: string }) {
 /* ─── Mobile Match Card ────────────────────────────────────── */
 
 function TeamSide({
-  team, isWinner, isLoser, placeholder, align, onInfo, onPick, canPick,
+  team, isWinner, isLoser, hasWinnerSelected, placeholder, align, onInfo, onPick, canPick,
 }: {
-  team: Team | null; isWinner: boolean; isLoser: boolean; placeholder: string;
-  align: 'left' | 'right'; onInfo: (t: Team) => void; onPick: (t: Team) => void; canPick: boolean;
+  team: Team | null; isWinner: boolean; isLoser: boolean; hasWinnerSelected: boolean;
+  placeholder: string; align: 'left' | 'right';
+  onInfo: (t: Team) => void; onPick: (t: Team) => void; canPick: boolean;
 }) {
   if (!team) {
     return (
@@ -158,22 +159,26 @@ function TeamSide({
     );
   }
 
-  const faded = isLoser ? 'opacity-40' : '';
   const isRight = align === 'right';
 
   return (
-    <div className={`flex-1 flex items-center gap-2 min-w-0 ${isRight ? 'flex-row-reverse' : ''} ${faded}`}>
+    <div className={`flex-1 flex items-center gap-2 min-w-0 ${isRight ? 'flex-row-reverse' : ''} ${isLoser ? 'opacity-40' : ''}`}>
       <Link href={`/teams/${team.id}`}
         className="text-xl shrink-0 active:scale-110 transition-transform" aria-label={`Info about ${team.name}`}>
         {team.flag}
       </Link>
-      <button type="button" onClick={() => canPick ? onPick(team) : onInfo(team)}
-        className={`text-sm truncate transition-colors min-w-0
-          ${isWinner ? 'font-bold text-[#185FA5]' : 'font-medium text-gray-800'}
-          ${canPick ? 'active:text-[#185FA5]' : ''}
-        `}>
-        {team.name}
-      </button>
+      <div className="flex flex-col min-w-0">
+        <button type="button" onClick={() => canPick ? onPick(team) : onInfo(team)}
+          className={`text-sm truncate transition-colors min-w-0 text-left
+            ${isWinner ? 'font-bold text-[#185FA5]' : 'font-medium text-gray-800'}
+            ${canPick ? 'active:text-[#185FA5]' : ''}
+          `}>
+          {team.name}
+        </button>
+        {isLoser && canPick && (
+          <span className="text-[10px] text-gray-400">← change</span>
+        )}
+      </div>
       {isWinner && <span className="text-[#185FA5] text-xs shrink-0 font-bold">✓</span>}
     </div>
   );
@@ -189,7 +194,7 @@ const MobileMatchCard = memo(function MobileMatchCard({
   const hasRealScore = !!liveScore;
   const realLive = hasRealScore && isMatchLive(liveScore.status);
   const realFinished = hasRealScore && isMatchFinished(liveScore.status);
-  const canPick = !hasRealScore && !!(match.teamA && match.teamB && !match.winner);
+  const canPick = !hasRealScore && !!(match.teamA && match.teamB);
   const hasWinner = !!match.winner || (realFinished && !!liveScore.winnerId);
   const isFinal = round === 'final';
 
@@ -214,6 +219,7 @@ const MobileMatchCard = memo(function MobileMatchCard({
       <div className="flex items-center px-4 py-4 gap-2">
         <TeamSide team={match.teamA} isWinner={winnerId === match.teamA?.id}
           isLoser={!!winnerId && winnerId !== match.teamA?.id}
+          hasWinnerSelected={!!winnerId}
           placeholder={getSlotLabel(round, matchIndex, 'A')} align="left"
           onInfo={onTeamInfo} onPick={onPick} canPick={canPick} />
 
@@ -236,6 +242,7 @@ const MobileMatchCard = memo(function MobileMatchCard({
 
         <TeamSide team={match.teamB} isWinner={winnerId === match.teamB?.id}
           isLoser={!!winnerId && winnerId !== match.teamB?.id}
+          hasWinnerSelected={!!winnerId}
           placeholder={getSlotLabel(round, matchIndex, 'B')} align="right"
           onInfo={onTeamInfo} onPick={onPick} canPick={canPick} />
       </div>
@@ -255,9 +262,11 @@ const MobileMatchCard = memo(function MobileMatchCard({
         </div>
       )}
 
-      {canPick && (
+      {canPick && !hasRealScore && (
         <div className="px-4 py-2 bg-blue-50/50 border-t border-blue-100">
-          <p className="text-[10px] text-[#185FA5] text-center font-medium">Tap a team to advance</p>
+          <p className="text-[10px] text-[#185FA5] text-center font-medium">
+            {hasWinner ? 'Tap the other team to change your pick' : 'Tap a team to advance'}
+          </p>
         </div>
       )}
     </div>
@@ -273,7 +282,7 @@ const CompactCard = memo(function CompactCard({
   onPick: (round: keyof BracketState, idx: number, team: Team) => void;
   onTeamInfo: (t: Team) => void;
 }) {
-  const canPick = !!(match.teamA && match.teamB && !match.winner);
+  const canPick = !!(match.teamA && match.teamB);
   const isFinal = round === 'final';
 
   function Slot({ team, isWinner, isLoser, placeholder }: {
@@ -299,6 +308,7 @@ const CompactCard = memo(function CompactCard({
           {team.name}
         </button>
         {isWinner && <span className="text-[9px] text-[#185FA5] ml-auto shrink-0 font-bold">✓</span>}
+        {isLoser && canPick && <span className="text-[8px] text-gray-400 ml-auto shrink-0">← change</span>}
       </div>
     );
   }

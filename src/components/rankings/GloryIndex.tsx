@@ -22,9 +22,17 @@ interface GloryEntry {
 
 const FORM_POINTS: Record<'W' | 'D' | 'L', number> = { W: 3, D: 1, L: 0 };
 
-function calcFormBonus(form: ('W' | 'D' | 'L')[]): number {
+function calcFormScore(form: ('W' | 'D' | 'L')[]): number {
   const pts = form.slice(0, 5).reduce((sum, r) => sum + FORM_POINTS[r], 0);
-  return (pts / 15) * 8;
+  return (pts / 15) * 40;
+}
+
+function calcRankBonus(rank: number): number {
+  return ((49 - rank) / 48) * 10;
+}
+
+function calcRawScore(rating: number, formScore: number, rankBonus: number): number {
+  return (rating * 0.6) + (formScore * 0.3) + (rankBonus * 0.1);
 }
 
 const PRE_FORMS: Record<string, ('W' | 'D' | 'L')[]> = {
@@ -92,11 +100,23 @@ const SNAPSHOT_FORMS: Record<Snapshot, Record<string, ('W' | 'D' | 'L')[]>> = {
 };
 
 function buildRanking(snapshot: Snapshot): GloryEntry[] {
-  return TEAMS.map(t => {
+  const rawEntries = TEAMS.map(t => {
     const form = SNAPSHOT_FORMS[snapshot][t.id] || ['D','D','D','D','D'];
-    const score = Math.round((t.rating + calcFormBonus(form)) * 10) / 10;
-    return { id: t.id, name: t.name, flag: t.flag, score, movement: 0 };
-  }).sort((a, b) => b.score - a.score);
+    const formScore = calcFormScore(form);
+    const rankBonus = calcRankBonus(t.rank);
+    const rawScore = calcRawScore(t.rating, formScore, rankBonus);
+    return { id: t.id, name: t.name, flag: t.flag, rawScore, movement: 0 };
+  });
+
+  const allRaw = rawEntries.map(e => e.rawScore);
+  const maxRaw = Math.max(...allRaw);
+  const minRaw = Math.min(...allRaw);
+  const range = maxRaw - minRaw;
+
+  return rawEntries.map(e => ({
+    ...e,
+    score: range === 0 ? 100 : Math.round(((e.rawScore - minRaw) / range) * 1000) / 10,
+  })).sort((a, b) => b.score - a.score);
 }
 
 function computeMovement(current: GloryEntry[], previous: GloryEntry[]): GloryEntry[] {
@@ -109,10 +129,18 @@ function computeMovement(current: GloryEntry[], previous: GloryEntry[]): GloryEn
 }
 
 function scoreColor(score: number): string {
-  if (score >= 88) return 'text-[#185FA5] font-bold';
-  if (score >= 80) return 'text-[#3B6D11] font-bold';
-  if (score >= 72) return 'text-[#854F0B] font-bold';
+  if (score >= 90) return 'text-[#185FA5] font-bold';
+  if (score >= 75) return 'text-[#3B6D11] font-bold';
+  if (score >= 55) return 'text-[#854F0B] font-bold';
   return 'text-gray-500 font-semibold';
+}
+
+function getContextChip(score: number): { label: string; classes: string } {
+  if (score >= 90) return { label: 'Elite', classes: 'bg-blue-50 text-[#185FA5] border-blue-200' };
+  if (score >= 75) return { label: 'Contender', classes: 'bg-green-50 text-[#3B6D11] border-green-200' };
+  if (score >= 55) return { label: 'Dark horse', classes: 'bg-amber-50 text-[#854F0B] border-amber-200' };
+  if (score >= 35) return { label: 'Qualifier', classes: 'bg-gray-50 text-gray-500 border-gray-200' };
+  return { label: 'Long shot', classes: 'bg-gray-50 text-gray-500 border-gray-200' };
 }
 
 function podiumBorder(rank: number): string {
@@ -146,6 +174,7 @@ function MovementBadge({ movement }: { movement: number }) {
 
 export default function GloryIndex() {
   const [snapshot, setSnapshot] = useState<Snapshot>('pre');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const rankings = useMemo(() => {
     const preRanking = buildRanking('pre');
@@ -164,6 +193,41 @@ export default function GloryIndex() {
         <p className="text-xs text-gray-400 mt-0.5">Who&apos;s closest to bringing it home.</p>
       </div>
 
+      {/* Collapsible info section */}
+      <div className="rounded-xl bg-blue-50 border border-blue-200 mb-4 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setInfoOpen(o => !o)}
+          className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+        >
+          <span className="text-xs font-semibold text-blue-800">
+            Glory Index — how it works ⓘ
+          </span>
+          <span className={`text-blue-400 text-xs transition-transform duration-200 ${infoOpen ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+        </button>
+        <div
+          className="transition-all duration-300 ease-in-out overflow-hidden"
+          style={{ maxHeight: infoOpen ? '280px' : '0px' }}
+        >
+          <div className="px-3 pb-3 text-xs text-blue-800 leading-relaxed space-y-2">
+            <p>
+              The Glory Index ranks all 48 nations by their likelihood of winning the tournament.
+            </p>
+            <p>It combines three signals:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li><span className="font-semibold">Squad strength (60%)</span> — based on player ratings and FIFA world ranking</li>
+              <li><span className="font-semibold">Current form (30%)</span> — last 5 international results, weighted by result</li>
+              <li><span className="font-semibold">Tournament momentum (10%)</span> — FIFA ranking trajectory</li>
+            </ul>
+            <p>
+              The top-ranked team scores 100. Every other team is ranked relative to them. Updated after every match.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filter dropdown */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-1 px-1">
         {(Object.keys(SNAPSHOT_LABELS) as Snapshot[]).map(s => (
@@ -176,14 +240,6 @@ export default function GloryIndex() {
         ))}
       </div>
 
-      {/* Formula explainer */}
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 mb-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-1">How it works</p>
-        <p className="text-xs text-blue-800 leading-relaxed">
-          Base rating + form bonus (last 5: W=3, D=1, L=0, scaled to 8pts max). Live and unforgiving.
-        </p>
-      </div>
-
       {/* Rankings list */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
@@ -193,6 +249,7 @@ export default function GloryIndex() {
         <div className="divide-y divide-gray-50">
           {rankings.map((entry, idx) => {
             const rank = idx + 1;
+            const chip = getContextChip(entry.score);
             return (
               <div key={entry.id}
                 className={`flex items-center gap-3 px-4 py-3 transition-colors ${podiumBorder(rank)}
@@ -204,6 +261,9 @@ export default function GloryIndex() {
                   {entry.name}
                 </Link>
                 <MovementBadge movement={entry.movement} />
+                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border shrink-0 ${chip.classes}`}>
+                  {chip.label}
+                </span>
                 <span className={`text-sm tabular-nums w-12 text-right shrink-0 ${scoreColor(entry.score)}`}>
                   {entry.score.toFixed(1)}
                 </span>

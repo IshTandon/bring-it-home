@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { TIMELINE_DAYS, TEAMS } from '@/lib/data';
 import type { TimelineDay } from '@/types';
 
+const TOURNAMENT_START = new Date('2026-06-12T00:00:00');
+const BANNER_DISMISSED_KEY = 'timeline-banner-dismissed';
+
 function teamIdByName(name: string): string | null {
   const t = TEAMS.find(t => t.name === name);
   return t ? t.id : null;
@@ -15,6 +18,57 @@ function TeamLink({ name, flag, className }: { name: string; flag?: string; clas
   const content = flag ? <><span>{flag}</span> {name}</> : name;
   if (!id) return <span className={className}>{content}</span>;
   return <Link href={`/teams/${id}`} className={`${className} hover:text-[#185FA5] transition-colors`}>{content}</Link>;
+}
+
+function DummyDataBanner() {
+  const [dismissed, setDismissed] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(BANNER_DISMISSED_KEY);
+    setDismissed(stored === 'true');
+  }, []);
+
+  if (dismissed || new Date() >= TOURNAMENT_START) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+  };
+
+  return (
+    <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-[#FEF3C7] border border-[#F59E0B] mb-4">
+      <span className="shrink-0 text-sm leading-none mt-0.5">⚠</span>
+      <p className="flex-1 text-xs text-amber-900 font-medium leading-relaxed">
+        Preview mode — showing illustrative data. Live content updates from June 12, 2026.
+      </p>
+      <button type="button" onClick={handleDismiss}
+        className="shrink-0 text-amber-700 hover:text-amber-900 transition-colors ml-1"
+        aria-label="Dismiss banner">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function FutureDayOverlay({ day }: { day: TimelineDay }) {
+  const isFuture = day.future || new Date() < TOURNAMENT_START;
+  if (!isFuture) return null;
+
+  const label = day.date ? `Unlocks ${day.date}` : 'Unlocks June 12';
+
+  return (
+    <div className="absolute inset-0 z-10 rounded-xl flex items-center justify-center"
+      style={{ backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', background: 'rgba(255,255,255,0.15)' }}>
+      <div className="bg-white rounded-full shadow-sm px-3 py-1.5 flex flex-col items-center gap-0.5">
+        <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+          🔒 {label}
+        </span>
+        <span className="text-[10px] text-gray-400">Dummy data — for illustration only</span>
+      </div>
+    </div>
+  );
 }
 
 const VOTE_STORAGE_KEY = 'timeline-votes';
@@ -329,11 +383,14 @@ export default function TournamentTimeline() {
         <p className="text-xs text-gray-400 mt-0.5">Every day is a chapter. Tap through the story of the World Cup.</p>
       </div>
 
+      <DummyDataBanner />
+
       {/* Day rail */}
       <DayRail days={TIMELINE_DAYS} activeId={activeId} onSelect={setActiveId} />
 
       {/* Day content */}
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-3 relative">
+        <FutureDayOverlay day={day} />
         <ChapterBanner day={day} />
         <MatchResults day={day} />
         <PlayerOfDayCard day={day} />
