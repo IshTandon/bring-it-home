@@ -51,6 +51,8 @@ export interface Team {
   teamStats?: TeamStats;
   rankingHistory?: { year: number; rank: number }[];
   squads?: SquadList;
+  eliminated?: boolean;
+  eliminatedRound?: string;
 }
 
 // ─── Players ──────────────────────────────────────────────
