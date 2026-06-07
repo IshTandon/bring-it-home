@@ -1,4 +1,36 @@
+// ─── Squad ────────────────────────────────────────────────
+export interface SquadPlayer {
+  id: string;
+  name: string;
+  number: number;
+  club: string;
+  age: number;
+  apiId?: number;
+}
+
+export interface SquadList {
+  gk: SquadPlayer[];
+  def: SquadPlayer[];
+  mid: SquadPlayer[];
+  fwd: SquadPlayer[];
+}
+
 // ─── Teams ────────────────────────────────────────────────
+export interface TeamStats {
+  goalsFor: number;
+  goalsAgainst: number;
+  cleanSheets: number;
+  yellowCards: number;
+  redCards: number;
+  goalsByType: {
+    openPlay: number;
+    setPiece: number;
+    freeKick: number;
+    penalty: number;
+    ownGoal: number;
+  };
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -16,17 +48,22 @@ export interface Team {
   bestResult: string;
   facts: string[];
   players: Player[];
+  teamStats?: TeamStats;
+  rankingHistory?: { year: number; rank: number }[];
+  squads?: SquadList;
 }
 
 // ─── Players ──────────────────────────────────────────────
 export interface Player {
   id: string;
+  apiId?: number;
   name: string;
   flag: string;
   team: string;
   teamId: string;
   pos: string;
   ovr: number;
+  photoUrl?: string;
   attrs: {
     PAC: number;
     SHO: number;
@@ -36,6 +73,7 @@ export interface Player {
     PHY: number;
   };
   form: ('W' | 'D' | 'L')[];
+  formDetailed?: { score: string; opponentFlag: string; outcome: 'W' | 'D' | 'L' }[];
   wcStats: {
     goals: number;
     assists: number;
@@ -147,6 +185,23 @@ export interface Stadium {
 }
 
 // ─── Timeline / Story ─────────────────────────────────────
+export interface TimelineMatch {
+  homeTeam: string;
+  homeFlag: string;
+  awayTeam: string;
+  awayFlag: string;
+  homeScore: number;
+  awayScore: number;
+  note: string;
+}
+
+export interface TimelinePlayerOfDay {
+  name: string;
+  flag: string;
+  team: string;
+  stat: string;
+}
+
 export interface TimelineDay {
   id: number;
   label: string;
@@ -156,15 +211,15 @@ export interface TimelineDay {
   future: boolean;
   headline: string;
   narrative: string;
-  matches: Match[];
-  playerOfDay?: Player;
+  matches: TimelineMatch[];
+  playerOfDay?: TimelinePlayerOfDay;
   stats: {
     goals: number;
     upsets: number;
     cards: number;
     penalties: number;
   };
-  mood: { team: string; positive: number; negative: number }[];
+  mood: { team: string; flag: string; positive: number; negative: number }[];
   voteOptions: { emoji: string; label: string; count: number }[];
 }
 

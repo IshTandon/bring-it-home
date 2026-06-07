@@ -70,3 +70,29 @@ export async function getTopAssists() {
 export async function getPlayerStats(playerId: string) {
   return apiFetch(`/players?id=${playerId}&league=${WC_LEAGUE}&season=${WC_SEASON}`);
 }
+
+// ─── Squad Players (all WC squads with photos) ───────────
+export async function getSquadPlayers(page = 1) {
+  return apiFetch(`/players?league=${WC_LEAGUE}&season=${WC_SEASON}&page=${page}`);
+}
+
+export async function getAllSquadPlayers() {
+  const pages: unknown[][] = [];
+  let page = 1;
+  const maxPages = 10;
+
+  while (page <= maxPages) {
+    try {
+      const data = await apiFetch<unknown[]>(
+        `/players?league=${WC_LEAGUE}&season=${WC_SEASON}&page=${page}`
+      );
+      if (!data || data.length === 0) break;
+      pages.push(data);
+      page++;
+    } catch {
+      break;
+    }
+  }
+
+  return pages.flat();
+}
