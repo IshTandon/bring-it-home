@@ -72,7 +72,9 @@ export default function PlayerGrid() {
   const filtered = useMemo(() => {
     let result = PLAYERS;
 
-    if (activeGroup !== 'All') {
+    if (activeGroup === 'All') {
+      result = result.filter(p => !!p.apiId);
+    } else {
       const group = POS_GROUPS.find(g => g.label === activeGroup);
       if (group) result = result.filter(p => group.positions.includes(p.pos));
     }
@@ -86,6 +88,8 @@ export default function PlayerGrid() {
         (p.teamId && p.teamId.toLowerCase().includes(q))
       );
     }
+
+    result.sort((a, b) => (b.apiId ? 1 : 0) - (a.apiId ? 1 : 0) || b.ovr - a.ovr);
 
     return result;
   }, [search, activeGroup]);
