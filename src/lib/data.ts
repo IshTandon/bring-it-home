@@ -107,6 +107,7 @@ function buildPlayers(): Player[] {
           teamId: team.id,
           pos,
           ovr,
+          apiId: sp.apiId,
           attrs,
           form,
           wcStats: { goals, assists, rating: Math.max(6.0, Math.min(9.5, rating)), matches: 3 + (playerIdx % 3) },
