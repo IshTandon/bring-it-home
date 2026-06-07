@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-gray-100 rounded-xl p-4;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-200
+           rounded-lg bg-white text-gray-600 cursor-pointer transition-all
+           hover:bg-gray-50 hover:border-gray-300 active:scale-95;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg cursor-pointer
+           transition-all bg-gray-900 text-white border border-gray-900
+           hover:bg-gray-800 active:scale-95;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-blue   { @apply bg-blue-50   text-blue-800;  }
+  .badge-green  { @apply bg-green-50  text-green-800; }
+  .badge-amber  { @apply bg-amber-50  text-amber-800; }
+  .badge-red    { @apply bg-red-50    text-red-800;   }
+  .badge-live   { @apply bg-red-50    text-red-700 animate-pulse; }
+
+  /* Stat boxes used across player cards and standings */
+  .stat-box {
+    @apply bg-gray-50 rounded-lg p-3 text-center;
+  }
+  .stat-num {
+    @apply text-xl font-semibold text-gray-900 leading-none;
+  }
+  .stat-lbl {
+    @apply text-[10px] text-gray-400 uppercase tracking-wider mt-1;
+  }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

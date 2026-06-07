@@ -1,0 +1,84 @@
+# Cursor rules for Bring It Home
+
+## App identity
+Name: Bring It Home
+Tagline: Every team starts the tournament. Only one nation brings it home.
+Tournament: FIFA World Cup 2026 — USA, Canada, Mexico. 48 teams, 104 matches.
+
+## Brand voice
+- Bold, editorial, emotional. Like a great sports broadcaster.
+- Short sentences. Present tense. Make the user feel the stakes.
+- Never corporate. Never bland. Every line of copy should feel alive.
+- The word "home" carries meaning — lean into it where natural.
+
+## Tone examples
+  Good: "Every team starts the tournament. Only one brings it home."
+  Good: "Japan have done it again. The bracket is in chaos."
+  Bad:  "View match statistics and prediction data for your selected teams."
+
+## Stack
+Next.js 14 App Router · TypeScript · Tailwind CSS · Zustand · SWR · Anthropic SDK
+
+## File conventions
+- Pages:      src/app/[route]/page.tsx
+- Components: src/components/[feature]/ComponentName.tsx  (PascalCase)
+- Hooks:      src/hooks/useHookName.ts
+- API routes: src/app/api/[route]/route.ts
+- Types:      src/types/index.ts  (single source of truth)
+- State:      src/lib/store.ts    (Zustand, persisted to localStorage)
+- Mock data:  src/lib/data.ts
+
+## Styling
+- Tailwind only — no inline styles, no CSS modules
+- Utility classes: .card, .btn, .btn-primary, .badge-* from globals.css
+- Colours: blue #185FA5, green #3B6D11, amber #854F0B, red #A32D2D
+- Cards: bg-white border border-gray-100 rounded-xl p-4
+- Spacing: gap-4, p-4, rounded-xl for cards — be consistent
+
+## Key patterns
+- Always check NEXT_PUBLIC_USE_MOCK_DATA before real API calls
+- API-Football calls → src/lib/api-football.ts only (never direct from components)
+- Weather calls → src/lib/weather.ts
+- AI/Claude calls → src/lib/claude.ts (server-side ONLY — never in client components)
+- Bracket state → useBracketStore (pickWinner, resetBracket, getBracketShareUrl)
+- Predictions + streak → usePredictionStore
+- SWR hooks poll /api/matches every 30s for live scores
+
+## Build order (what to build next)
+1. src/components/bracket/BracketSimulator.tsx
+   → Full R32→Final bracket. Click team name/flag/stadium for info panels.
+   → Advance button picks winner. Share bracket via getBracketShareUrl().
+   → Uses useBracketStore from store.ts.
+
+2. src/components/players/PlayerCard.tsx + PlayerGrid.tsx
+   → FIFA-style card: PAC SHO PAS DRI DEF PHY attributes.
+   → Click to expand: heatmap, WC stats, form tracker, tactical analysis button.
+   → Filter by position, search by name/team.
+
+3. src/components/groups/IfThisHappens.tsx
+   → Toggle match results (Team A win / Draw / Team B win).
+   → Standings table recalculates live. Qualification probability bars.
+   → "What this means" insight panel updates automatically.
+
+4. src/components/timeline/TournamentTimeline.tsx
+   → Horizontal day rail. Each day = a story chapter.
+   → Player of the day, match results, community mood vote, streak bar.
+   → Future days locked until matches are played.
+
+5. src/components/wrapped/WCWrapped.tsx
+   → End-of-matchday personalised stats card.
+   → Correct predictions, scorers called, accuracy rank, favourite team.
+   → Shareable image via html2canvas or server-side OG image.
+
+6. src/components/ui/StreakBar.tsx
+   → Global persistent streak counter. Shown on every page.
+   → Days active, correct picks, fan IQ level badge.
+
+## API keys (copy .env.local.example → .env.local)
+- FOOTBALL_API_KEY   → api-football.com (free: 100 req/day)
+- WEATHER_API_KEY    → openweathermap.org (free: 1000 req/day)
+- ANTHROPIC_API_KEY  → console.anthropic.com
+
+## Deploy
+vercel --prod  (zero config for Next.js 14)
+Set all env vars in Vercel dashboard → Settings → Environment Variables
