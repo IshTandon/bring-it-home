@@ -3,10 +3,14 @@
  * Global state with Zustand.
  * Bracket state + user predictions persist to localStorage.
  * Share bracket: serialize to base64 URL param.
+ *
+ * Bracket slice is isolated so winner updates only notify bracket subscribers.
+ * MatchCard components use selector + shallow equality to avoid re-renders.
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 import type { BracketState, BracketMatch, Team, Prediction, UserStats } from '@/types';
 import { TEAMS } from '@/lib/data';
 
@@ -17,7 +21,7 @@ interface BracketStore {
   pickWinner: (round: keyof BracketState, matchIndex: number, team: Team) => void;
   resetBracket: () => void;
   getBracketShareUrl: () => string;
-  loadBracketFromUrl: (encoded: string) => void;
+  loadBracketFromUrl: (encoded: string) => boolean;
 }
 
 const STADIUM_NAMES = ['MetLife Stadium', 'AT&T Stadium', 'SoFi Stadium', 'Estadio Azteca'];
@@ -56,6 +60,8 @@ function makeEmptyBracket(): BracketState {
 
 const ROUND_ORDER: (keyof BracketState)[] = ['r32', 'r16', 'qf', 'sf', 'final'];
 
+let pendingPropagation: number | null = null;
+
 export const useBracketStore = create<BracketStore>()(
   persist(
     (set, get) => ({
@@ -65,20 +71,32 @@ export const useBracketStore = create<BracketStore>()(
 
       pickWinner: (round, matchIndex, team) => {
         set(state => {
-          const bracket = structuredClone(state.bracket);
-          bracket[round][matchIndex].winner = team;
+          const bracket = { ...state.bracket };
+          const roundMatches = [...bracket[round]];
+          roundMatches[matchIndex] = { ...roundMatches[matchIndex], winner: team };
+          bracket[round] = roundMatches;
+          return { bracket };
+        });
 
-          // Advance to next round
+        if (pendingPropagation !== null) {
+          cancelAnimationFrame(pendingPropagation);
+        }
+
+        pendingPropagation = requestAnimationFrame(() => {
+          pendingPropagation = null;
           const ri = ROUND_ORDER.indexOf(round);
           if (ri < ROUND_ORDER.length - 1) {
-            const nextRound = ROUND_ORDER[ri + 1];
-            const nextIdx = Math.floor(matchIndex / 2);
-            const slot = matchIndex % 2 === 0 ? 'teamA' : 'teamB';
-            bracket[nextRound][nextIdx][slot] = team;
-            // Clear downstream winners when team changes
-            bracket[nextRound][nextIdx].winner = null;
+            set(state => {
+              const bracket = { ...state.bracket };
+              const nextRound = ROUND_ORDER[ri + 1];
+              const nextIdx = Math.floor(matchIndex / 2);
+              const slot = matchIndex % 2 === 0 ? 'teamA' : 'teamB';
+              const nextMatches = [...bracket[nextRound]];
+              nextMatches[nextIdx] = { ...nextMatches[nextIdx], [slot]: team, winner: null };
+              bracket[nextRound] = nextMatches;
+              return { bracket };
+            });
           }
-          return { bracket };
         });
       },
 
@@ -86,19 +104,32 @@ export const useBracketStore = create<BracketStore>()(
 
       getBracketShareUrl: () => {
         const { bracket } = get();
+        const expectedCounts: Record<keyof BracketState, number> = { r32: 16, r16: 8, qf: 4, sf: 2, final: 1 };
+        for (const r of ROUND_ORDER) {
+          if (!bracket[r] || bracket[r].length !== expectedCounts[r]) {
+            throw new Error(`Bracket incomplete: ${r} has ${bracket[r]?.length ?? 0} matches, expected ${expectedCounts[r]}`);
+          }
+        }
         const winners: Record<string, string | null> = {};
         ROUND_ORDER.forEach(r => {
           bracket[r].forEach((m, i) => {
             winners[`${r}-${i}`] = m.winner?.id ?? null;
           });
         });
-        const encoded = btoa(JSON.stringify(winners));
+        const json = JSON.stringify(winners, (_key, value) => value === undefined ? null : value);
+        const encoded = btoa(json);
         return `${window.location.origin}/bracket?b=${encoded}`;
       },
 
-      loadBracketFromUrl: (encoded: string) => {
+      loadBracketFromUrl: (encoded: string): boolean => {
         try {
-          const winners: Record<string, string | null> = JSON.parse(atob(encoded));
+          const decoded = atob(encoded);
+          const winners: Record<string, string | null> = JSON.parse(decoded);
+          if (!winners || typeof winners !== 'object') {
+            set({ bracket: makeEmptyBracket() });
+            return false;
+          }
+
           set({ bracket: makeEmptyBracket() });
 
           for (const round of ROUND_ORDER) {
@@ -112,14 +143,43 @@ export const useBracketStore = create<BracketStore>()(
               }
             });
           }
+          return true;
         } catch {
-          console.error('Failed to load bracket from URL');
+          set({ bracket: makeEmptyBracket() });
+          return false;
         }
       },
     }),
     { name: 'wc2026-bracket', skipHydration: true }
   )
 );
+
+// ─── Selector hooks for granular subscriptions ───────────
+export function useBracketMatch(round: keyof BracketState, matchIndex: number): BracketMatch {
+  return useBracketStore(
+    state => state.bracket[round][matchIndex],
+    shallow
+  );
+}
+
+export function useBracketRound(round: keyof BracketState): BracketMatch[] {
+  return useBracketStore(
+    state => state.bracket[round],
+    shallow
+  );
+}
+
+export function useBracketActions() {
+  return useBracketStore(
+    state => ({
+      pickWinner: state.pickWinner,
+      resetBracket: state.resetBracket,
+      getBracketShareUrl: state.getBracketShareUrl,
+      loadBracketFromUrl: state.loadBracketFromUrl,
+    }),
+    shallow
+  );
+}
 
 // ─── Predictions Store ────────────────────────────────────
 interface PredictionStore {
