@@ -122,6 +122,8 @@ const ROUND_DATES: Record<keyof BracketState, string> = {
   r32: 'Jun 15–16', r16: 'Jun 20–21', qf: 'Jun 25', sf: 'Jun 28–29', final: 'Jul 4',
 };
 
+const ROUND_LABEL_CENTERS = [66, 230, 394, 558, 722];
+
 function getSlotLabel(round: keyof BracketState, matchIndex: number, slot: 'A' | 'B'): string {
   const ri = ROUNDS.indexOf(round);
   if (ri <= 0) return 'TBD';
@@ -142,6 +144,46 @@ function Toast({ message }: { message: string }) {
   );
 }
 
+/* ─── Confetti Burst ──────────────────────────────────────── */
+
+const CONFETTI_COLORS = ['#F59E0B', '#EF4444', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F97316'];
+
+function ConfettiBurst() {
+  const pieces = useMemo(() =>
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 500,
+      y: -(Math.random() * 400 + 80),
+      r: Math.random() * 720 - 360,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      size: Math.random() * 8 + 4,
+      delay: Math.random() * 0.4,
+      round: Math.random() > 0.5,
+    })),
+  []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+      <div className="absolute left-1/2 top-1/3">
+        {pieces.map(p => (
+          <div key={p.id} className="confetti-piece"
+            style={{
+              width: p.size,
+              height: p.size * (p.round ? 1 : 0.6),
+              backgroundColor: p.color,
+              borderRadius: p.round ? '50%' : '2px',
+              '--tx': `${p.x}px`,
+              '--ty': `${p.y}px`,
+              '--tr': `${p.r}deg`,
+              animationDelay: `${p.delay}s`,
+            } as React.CSSProperties}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Team Side (memoized) ─────────────────────────────────── */
 
 const TeamSide = memo(function TeamSide({
@@ -153,8 +195,9 @@ const TeamSide = memo(function TeamSide({
 }) {
   if (!team) {
     return (
-      <div className={`flex-1 flex items-center gap-2 min-w-0 ${align === 'right' ? 'justify-end text-right' : ''}`}>
-        <span className="text-[11px] text-gray-300 italic truncate">{placeholder}</span>
+      <div className={`flex-1 flex items-center gap-2 min-w-0 ${align === 'right' ? 'justify-end flex-row-reverse' : ''}`}>
+        <div className="w-5 h-5 rounded-full bg-gray-100 shrink-0" />
+        <span className="text-[11px] text-gray-300 font-medium">TBD</span>
       </div>
     );
   }
@@ -162,7 +205,7 @@ const TeamSide = memo(function TeamSide({
   const isRight = align === 'right';
 
   return (
-    <div className={`flex-1 flex items-center gap-2 min-w-0 ${isRight ? 'flex-row-reverse' : ''} ${isLoser ? 'opacity-40' : ''}`}>
+    <div className={`flex-1 flex items-center gap-2 min-w-0 animate-team-slide-in ${isRight ? 'flex-row-reverse' : ''} ${isLoser ? 'opacity-40' : ''}`}>
       <Link href={`/teams/${team.id}`}
         className="text-xl shrink-0 active:scale-110 transition-transform will-change-transform" aria-label={`Info about ${team.name}`}>
         {team.flag}
@@ -293,12 +336,13 @@ const CompactCard = memo(function CompactCard({
     if (!team) {
       return (
         <div className="flex items-center gap-1.5 px-2 min-h-[22px]">
-          <span className="text-[9px] text-gray-300 italic truncate">{placeholder}</span>
+          <div className="w-3.5 h-3.5 rounded-full bg-gray-100 shrink-0" />
+          <span className="text-[9px] text-gray-300 font-medium">TBD</span>
         </div>
       );
     }
     return (
-      <div className={`flex items-center gap-1.5 px-2 w-full min-h-[22px] transition-colors duration-150
+      <div className={`flex items-center gap-1.5 px-2 w-full min-h-[22px] transition-colors duration-150 animate-team-slide-in
         ${isWinner ? 'bg-[#185FA5]/10' : ''} ${isLoser ? 'opacity-40' : ''}
       `}>
         <Link href={`/teams/${team.id}`} className="text-xs shrink-0">{team.flag}</Link>
@@ -322,7 +366,13 @@ const CompactCard = memo(function CompactCard({
       <Slot team={match.teamA} isWinner={match.winner?.id === match.teamA?.id}
         isLoser={!!match.winner && match.winner.id !== match.teamA?.id}
         placeholder={getSlotLabel(round, matchIndex, 'A')} />
-      <div className="border-t border-gray-100" />
+      <div className="relative border-t border-gray-100">
+        {round === 'r32' && (
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-1 text-[7px] font-bold uppercase tracking-wider text-gray-300 leading-none">
+            VS
+          </span>
+        )}
+      </div>
       <Slot team={match.teamB} isWinner={match.winner?.id === match.teamB?.id}
         isLoser={!!match.winner && match.winner.id !== match.teamB?.id}
         placeholder={getSlotLabel(round, matchIndex, 'B')} />
@@ -575,6 +625,17 @@ const EnlargedBracketView = memo(function EnlargedBracketView({
         <div
           className={`min-w-[800px] will-change-transform ${isTransitioning ? '[&_*:not(button):not(a)]:pointer-events-none' : ''}`}
         >
+          <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-100 mb-3 py-2">
+            <div className="relative h-5">
+              {ROUND_NAV.map((r, i) => (
+                <span key={r.key}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap"
+                  style={{ left: ROUND_LABEL_CENTERS[i] }}>
+                  {r.full}
+                </span>
+              ))}
+            </div>
+          </div>
           <BracketTree round="final" matchIndex={0} bracket={bracket}
             onPick={onPick} onTeamInfo={onTeamInfo} />
         </div>
@@ -601,6 +662,9 @@ function BracketInner() {
   const [selectedStadium, setSelectedStadium] = useState<Stadium | null>(null);
   const [toast, setToast] = useState('');
   const [hydrated, setHydrated] = useState(false);
+  const [milestoneMsg, setMilestoneMsg] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevDecidedRef = useRef<number | null>(null);
 
   const liveScoreMap = useMemo(() => {
     const map = new Map<string, LiveScore>();
@@ -633,6 +697,10 @@ function BracketInner() {
     return liveScoreMap.get(`${match.teamA.id}-${match.teamB.id}`)
       ?? liveScoreMap.get(`${match.teamB.id}-${match.teamA.id}`);
   }, [liveScoreMap]);
+
+  const totalMatches = ROUNDS.reduce((sum, r) => sum + bracket[r].length, 0);
+  const decidedMatches = ROUNDS.reduce((sum, r) => sum + bracket[r].filter(m => m.winner).length, 0);
+  const pct = totalMatches > 0 ? (decidedMatches / totalMatches) * 100 : 0;
 
   useEffect(() => {
     useBracketStore.persist.rehydrate();
@@ -675,6 +743,33 @@ function BracketInner() {
     if (stadium) setSelectedStadium(stadium);
   }, []);
 
+  useEffect(() => {
+    if (!hydrated || prevDecidedRef.current === null) {
+      prevDecidedRef.current = decidedMatches;
+      return;
+    }
+    const prev = prevDecidedRef.current;
+    prevDecidedRef.current = decidedMatches;
+    if (decidedMatches >= 16 && prev < 16) {
+      setMilestoneMsg('Round of 16 complete \u{1F525}');
+      setTimeout(() => setMilestoneMsg(''), 3500);
+    } else if (decidedMatches >= 24 && prev < 24) {
+      setMilestoneMsg('Quarter-finals locked in');
+      setTimeout(() => setMilestoneMsg(''), 3500);
+    } else if (decidedMatches >= totalMatches && prev < totalMatches && totalMatches > 0) {
+      setMilestoneMsg('Your champion is chosen \u{1F3C6}');
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      setTimeout(() => setMilestoneMsg(''), 4000);
+    }
+  }, [hydrated, decidedMatches, totalMatches]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setViewMode('bracket');
+    }
+  }, []);
+
   const handleTeamInfo = useCallback((team: Team) => {
     setSelectedTeam(team);
   }, []);
@@ -696,9 +791,6 @@ function BracketInner() {
   }
 
   const champion = bracket.final[0]?.winner;
-  const totalMatches = ROUNDS.reduce((sum, r) => sum + bracket[r].length, 0);
-  const decidedMatches = ROUNDS.reduce((sum, r) => sum + bracket[r].filter(m => m.winner).length, 0);
-  const pct = totalMatches > 0 ? (decidedMatches / totalMatches) * 100 : 0;
 
   const activeMatches = bracket[activeRound];
   const activeDecided = activeMatches.filter(m => m.winner).length;
@@ -720,15 +812,21 @@ function BracketInner() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <button type="button" onClick={handleToggleView}
-            className="btn text-xs px-2 py-1.5" title={viewMode === 'list' ? 'Full bracket view' : 'List view'}>
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full bg-white text-gray-600 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-95">
             {viewMode === 'list' ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-              </svg>
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+                Expand bracket
+              </>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
-              </svg>
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+                List view
+              </>
             )}
           </button>
           <button type="button" onClick={handleShare} className="btn text-xs px-3 py-1.5">Share</button>
@@ -737,13 +835,21 @@ function BracketInner() {
       </div>
 
       {/* Progress */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-[#185FA5] to-blue-500 transition-all duration-500 will-change-[width]"
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium text-gray-500 tabular-nums">
+            {decidedMatches} of {totalMatches} matches predicted
+          </span>
+          {milestoneMsg && (
+            <span className="text-xs font-semibold text-amber-600 animate-milestone-pop">{milestoneMsg}</span>
+          )}
+        </div>
+        <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }} />
         </div>
-        <span className="text-[10px] text-gray-400 tabular-nums shrink-0 font-medium">{decidedMatches}/{totalMatches}</span>
       </div>
+      {showConfetti && <ConfettiBurst />}
 
       {champion && <ChampionBanner team={champion} />}
 
