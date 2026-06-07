@@ -354,10 +354,10 @@ export default function IfThisHappens() {
         <p className="text-xs text-gray-400 mt-1">Toggle match results. Watch the table change.</p>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-1 px-1">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">
         {MOCK_GROUPS.map((group, idx) => (
           <button key={group.id} type="button" onClick={() => setActiveGroupIdx(idx)}
-            className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-medium transition-all active:scale-95
+            className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-medium transition-all active:scale-95 snap-start
               ${idx === activeGroupIdx
                 ? 'bg-gray-900 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200'}

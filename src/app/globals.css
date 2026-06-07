@@ -56,6 +56,16 @@
   animation: slide-up 0.25s ease-out;
 }
 
+@keyframes compare-pop {
+  0%   { transform: scale(0.97); }
+  60%  { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.animate-compare-pop {
+  animation: compare-pop 0.4s ease-out;
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

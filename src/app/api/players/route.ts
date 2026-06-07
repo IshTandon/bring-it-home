@@ -37,10 +37,16 @@ const FLAG_MAP: Record<string, string> = {
   Brazil: '🇧🇷', France: '🇫🇷', Argentina: '🇦🇷', Germany: '🇩🇪', England: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
   Spain: '🇪🇸', Portugal: '🇵🇹', Netherlands: '🇳🇱', Belgium: '🇧🇪', Croatia: '🇭🇷',
   Uruguay: '🇺🇾', Colombia: '🇨🇴', USA: '🇺🇸', Mexico: '🇲🇽', Japan: '🇯🇵',
-  Senegal: '🇸🇳', Switzerland: '🇨🇭', Morocco: '🇲🇦', Denmark: '🇩🇰', Australia: '🇦🇺',
-  'South Korea': '🇰🇷', 'Korea Republic': '🇰🇷', Canada: '🇨🇦', Nigeria: '🇳🇬',
-  Ecuador: '🇪🇨', Poland: '🇵🇱', Serbia: '🇷🇸', Iran: '🇮🇷', Ghana: '🇬🇭',
-  Cameroon: '🇨🇲', Tunisia: '🇹🇳', 'Saudi Arabia': '🇸🇦', 'Costa Rica': '🇨🇷',
+  Senegal: '🇸🇳', Switzerland: '🇨🇭', Morocco: '🇲🇦', Australia: '🇦🇺',
+  'South Korea': '🇰🇷', 'Korea Republic': '🇰🇷', Canada: '🇨🇦',
+  Ecuador: '🇪🇨', Iran: '🇮🇷', Ghana: '🇬🇭',
+  Tunisia: '🇹🇳', 'Saudi Arabia': '🇸🇦', Norway: '🇳🇴', Austria: '🇦🇹',
+  Algeria: '🇩🇿', Egypt: '🇪🇬', Sweden: '🇸🇪', Qatar: '🇶🇦',
+  'South Africa': '🇿🇦', Czechia: '🇨🇿', 'Czech Republic': '🇨🇿', Türkiye: '🇹🇷', Turkey: '🇹🇷',
+  'Ivory Coast': '🇨🇮', "Côte d'Ivoire": '🇨🇮', Curaçao: '🇨🇼', 'New Zealand': '🇳🇿',
+  'Cape Verde': '🇨🇻', Iraq: '🇮🇶', Jordan: '🇯🇴', 'DR Congo': '🇨🇩',
+  Uzbekistan: '🇺🇿', Panama: '🇵🇦', Scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', Haiti: '🇭🇹',
+  Paraguay: '🇵🇾', 'Bosnia and Herzegovina': '🇧🇦', 'Bosnia & Herzegovina': '🇧🇦',
 };
 
 function mapPosition(apiPos: string): string {

@@ -3,22 +3,38 @@ import './globals.css';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Bring It Home — FIFA World Cup 2026',
-  description: 'Every team starts the tournament. Only one nation brings it home. Build your bracket, track every group, scout every player.',
+  title: "Who's Gonna Bring It Home?",
+  description: 'Every team starts the tournament. Only one nation brings it home.',
+  manifest: '/manifest.json',
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icon-180x180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icon-167x167.png', sizes: '167x167', type: 'image/png' },
+      { url: '/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/icon-120x120.png', sizes: '120x120', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'apple-touch-icon', url: '/icon-180x180.png' },
+    ],
   },
   openGraph: {
-    title: 'Bring It Home — FIFA World Cup 2026',
+    title: "Who's Gonna Bring It Home?",
     description: 'Every team starts the tournament. Only one nation brings it home.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Who's Gonna Bring It Home?",
     images: ['/og-image.png'],
   },
-  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1a1a2e',
+  themeColor: '#0A1628',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',

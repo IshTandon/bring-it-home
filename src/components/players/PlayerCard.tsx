@@ -4,6 +4,7 @@ import { useState, memo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Player } from '@/types';
+import { getPlayerPhotoUrl } from '@/lib/playerUtils';
 import FormStrip from '@/components/ui/FormStrip';
 
 const ATTR_COLORS: Record<string, string> = {
@@ -41,32 +42,29 @@ function HeatmapBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-function getPhotoUrl(player: Player): string | null {
-  if (player.apiId) return `https://media.api-sports.io/football/players/${player.apiId}.png`;
-  if (player.photoUrl) return player.photoUrl;
-  return null;
-}
-
 function PlayerAvatar({ player }: { player: Player }) {
   const [imgError, setImgError] = useState(false);
-  const photoSrc = getPhotoUrl(player);
+  const photoSrc = player.apiId
+    ? getPlayerPhotoUrl(player.apiId)
+    : '/placeholder-player.svg';
 
-  if (!photoSrc || imgError) {
+  const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+
+  if (imgError) {
     return (
-      <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-        <span className="text-xl leading-none">{player.flag}</span>
+      <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+        <span className="text-sm font-semibold text-gray-500">{initials}</span>
       </div>
     );
   }
 
   return (
-    <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-100 shrink-0 relative">
+    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
       <Image
         src={photoSrc}
         alt={player.name}
-        width={44}
-        height={44}
-        className="object-cover w-full h-full"
+        fill
+        className="object-cover object-top"
         onError={() => setImgError(true)}
         unoptimized
       />

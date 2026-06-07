@@ -14,17 +14,29 @@ const WC_LEAGUE = process.env.NEXT_PUBLIC_WC_LEAGUE_ID ?? '1';
 const WC_SEASON = process.env.NEXT_PUBLIC_WC_SEASON ?? '2026';
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || !API_KEY;
 
-async function apiFetch<T>(endpoint: string): Promise<T> {
+interface FetchOptions {
+  revalidate?: number | false;
+}
+
+async function apiFetch<T>(endpoint: string, opts: FetchOptions = {}): Promise<T> {
   if (USE_MOCK) {
     console.log(`[mock] ${endpoint}`);
     throw new Error('mock');
   }
+
+  const nextOpts: RequestInit['next'] = {};
+  if (opts.revalidate === 0 || opts.revalidate === false) {
+    nextOpts.revalidate = 0;
+  } else {
+    nextOpts.revalidate = opts.revalidate ?? 30;
+  }
+
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
       'x-apisports-key': API_KEY,
       'x-rapidapi-host': BASE_URL,
     },
-    next: { revalidate: 30 }, // ISR — revalidate every 30s for live scores
+    next: nextOpts,
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const json = await res.json();
@@ -33,29 +45,29 @@ async function apiFetch<T>(endpoint: string): Promise<T> {
 
 // ─── Fixtures / Matches ───────────────────────────────────
 export async function getLiveMatches() {
-  return apiFetch(`/fixtures?live=all&league=${WC_LEAGUE}&season=${WC_SEASON}`);
+  return apiFetch(`/fixtures?live=all&league=${WC_LEAGUE}&season=${WC_SEASON}`, { revalidate: 0 });
 }
 
 export async function getTodayMatches() {
   const today = new Date().toISOString().split('T')[0];
-  return apiFetch(`/fixtures?date=${today}&league=${WC_LEAGUE}&season=${WC_SEASON}`);
+  return apiFetch(`/fixtures?date=${today}&league=${WC_LEAGUE}&season=${WC_SEASON}`, { revalidate: 30 });
 }
 
 export async function getMatchById(fixtureId: string) {
-  return apiFetch(`/fixtures?id=${fixtureId}`);
+  return apiFetch(`/fixtures?id=${fixtureId}`, { revalidate: 0 });
 }
 
 export async function getMatchStats(fixtureId: string) {
-  return apiFetch(`/fixtures/statistics?fixture=${fixtureId}`);
+  return apiFetch(`/fixtures/statistics?fixture=${fixtureId}`, { revalidate: 0 });
 }
 
 export async function getMatchEvents(fixtureId: string) {
-  return apiFetch(`/fixtures/events?fixture=${fixtureId}`);
+  return apiFetch(`/fixtures/events?fixture=${fixtureId}`, { revalidate: 0 });
 }
 
 // ─── Standings ────────────────────────────────────────────
 export async function getStandings() {
-  return apiFetch(`/standings?league=${WC_LEAGUE}&season=${WC_SEASON}`);
+  return apiFetch(`/standings?league=${WC_LEAGUE}&season=${WC_SEASON}`, { revalidate: 60 });
 }
 
 // ─── Players ──────────────────────────────────────────────

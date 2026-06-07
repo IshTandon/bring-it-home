@@ -117,7 +117,7 @@ export const useBracketStore = create<BracketStore>()(
         }
       },
     }),
-    { name: 'wc2026-bracket' }
+    { name: 'wc2026-bracket', skipHydration: true }
   )
 );
 
@@ -190,6 +190,6 @@ export const usePredictionStore = create<PredictionStore>()(
 
       resetStreak: () => set(state => ({ userStats: { ...state.userStats, streak: 0 } })),
     }),
-    { name: 'wc2026-predictions' }
+    { name: 'wc2026-predictions', skipHydration: true }
   )
 );

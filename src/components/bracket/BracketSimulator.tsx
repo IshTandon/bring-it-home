@@ -1,10 +1,111 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, Component, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useBracketStore } from '@/lib/store';
+import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { STADIUMS } from '@/lib/data';
-import type { Team, BracketMatch, BracketState, Stadium } from '@/types';
+import { isMatchLive, isMatchFinished, formatMatchMinute } from '@/lib/matchUtils';
+import MatchMinuteBadge from '@/components/ui/MatchMinuteBadge';
+import type { Team, BracketMatch, BracketState, Stadium, Match, MatchStatus } from '@/types';
+
+interface LiveScore {
+  homeScore: number;
+  awayScore: number;
+  status: MatchStatus;
+  minute?: number;
+  winnerId?: string;
+}
+
+/* ─── Error Boundary ──────────────────────────────────────── */
+
+interface ErrorBoundaryState { hasError: boolean; error: Error | null }
+
+class BracketErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  handleReset = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('wc2026-bracket');
+      window.location.reload();
+    }
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Something went wrong</h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-xs">
+            The bracket ran into an issue. Reset to start fresh — your picks will be cleared.
+          </p>
+          <button type="button" onClick={this.handleReset}
+            className="btn-primary text-sm px-6 py-2.5">
+            Reset bracket
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+/* ─── Skeleton Loader ─────────────────────────────────────── */
+
+function BracketSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div>
+          <div className="h-3 w-20 bg-gray-100 rounded animate-pulse mb-2" />
+          <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
+        </div>
+        <div className="flex gap-1.5">
+          <div className="h-8 w-16 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-8 w-16 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
+      <div className="flex gap-1.5 overflow-hidden pb-1">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="h-9 w-20 bg-gray-100 rounded-full animate-pulse shrink-0" />
+        ))}
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+              <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="flex items-center px-4 py-4 gap-2">
+              <div className="flex-1 flex items-center gap-2">
+                <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="h-3 w-10 bg-gray-100 rounded animate-pulse" />
+              <div className="flex-1 flex items-center gap-2 justify-end">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="border-t border-gray-100 px-4 py-2">
+              <div className="h-3 w-28 bg-gray-100 rounded animate-pulse mx-auto" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ─── Constants ────────────────────────────────────────────── */
 
@@ -79,39 +180,62 @@ function TeamSide({
 }
 
 const MobileMatchCard = memo(function MobileMatchCard({
-  match, round, matchIndex, onPick, onTeamInfo, onStadiumInfo,
+  match, round, matchIndex, onPick, onTeamInfo, onStadiumInfo, liveScore,
 }: {
   match: BracketMatch; round: keyof BracketState; matchIndex: number;
   onPick: (t: Team) => void; onTeamInfo: (t: Team) => void; onStadiumInfo: (n: string) => void;
+  liveScore?: LiveScore;
 }) {
-  const canPick = !!(match.teamA && match.teamB && !match.winner);
-  const hasWinner = !!match.winner;
+  const hasRealScore = !!liveScore;
+  const realLive = hasRealScore && isMatchLive(liveScore.status);
+  const realFinished = hasRealScore && isMatchFinished(liveScore.status);
+  const canPick = !hasRealScore && !!(match.teamA && match.teamB && !match.winner);
+  const hasWinner = !!match.winner || (realFinished && !!liveScore.winnerId);
   const isFinal = round === 'final';
+
+  const winnerId = liveScore?.winnerId ?? match.winner?.id;
 
   return (
     <div className={`bg-white border rounded-xl overflow-hidden shadow-sm
-      ${hasWinner ? 'border-[#185FA5]/30' : 'border-gray-200'}
+      ${realLive ? 'border-red-200 ring-1 ring-red-100' : hasWinner ? 'border-[#185FA5]/30' : 'border-gray-200'}
       ${isFinal ? 'ring-2 ring-amber-300' : ''}
     `}>
       <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 border-b border-gray-100">
         <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
           {ROUND_NAV.find(r => r.key === round)?.full} · M{matchIndex + 1}
         </span>
-        <span className="text-[10px] text-gray-300 tabular-nums">{ROUND_DATES[round]}</span>
+        {hasRealScore ? (
+          <MatchMinuteBadge status={liveScore.status} minute={liveScore.minute} time={match.time} />
+        ) : (
+          <span className="text-[10px] text-gray-300 tabular-nums">{ROUND_DATES[round]}</span>
+        )}
       </div>
 
       <div className="flex items-center px-4 py-4 gap-2">
-        <TeamSide team={match.teamA} isWinner={match.winner?.id === match.teamA?.id}
-          isLoser={!!match.winner && match.winner.id !== match.teamA?.id}
+        <TeamSide team={match.teamA} isWinner={winnerId === match.teamA?.id}
+          isLoser={!!winnerId && winnerId !== match.teamA?.id}
           placeholder={getSlotLabel(round, matchIndex, 'A')} align="left"
           onInfo={onTeamInfo} onPick={onPick} canPick={canPick} />
 
-        <div className="flex flex-col items-center shrink-0 px-1">
-          <span className="text-[10px] text-gray-300 font-medium">{match.time}</span>
+        <div className="flex flex-col items-center shrink-0 px-2">
+          {hasRealScore ? (
+            <>
+              <span className={`text-lg font-bold tabular-nums ${realLive ? 'text-gray-900' : 'text-[#185FA5]'}`}>
+                {liveScore.homeScore} – {liveScore.awayScore}
+              </span>
+              {realLive && liveScore.minute && (
+                <span className="text-[10px] text-red-500 font-semibold tabular-nums">
+                  {formatMatchMinute(liveScore.minute, liveScore.status)}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-[10px] text-gray-300 font-medium">{match.time}</span>
+          )}
         </div>
 
-        <TeamSide team={match.teamB} isWinner={match.winner?.id === match.teamB?.id}
-          isLoser={!!match.winner && match.winner.id !== match.teamB?.id}
+        <TeamSide team={match.teamB} isWinner={winnerId === match.teamB?.id}
+          isLoser={!!winnerId && winnerId !== match.teamB?.id}
           placeholder={getSlotLabel(round, matchIndex, 'B')} align="right"
           onInfo={onTeamInfo} onPick={onPick} canPick={canPick} />
       </div>
@@ -122,6 +246,14 @@ const MobileMatchCard = memo(function MobileMatchCard({
           📍 {match.stadium}
         </button>
       </div>
+
+      {hasRealScore && (
+        <div className="px-4 py-1.5 bg-blue-50/50 border-t border-blue-100">
+          <p className="text-[10px] text-[#185FA5] text-center font-medium">
+            {realLive ? 'Live result · auto-updating' : 'Final result'}
+          </p>
+        </div>
+      )}
 
       {canPick && (
         <div className="px-4 py-2 bg-blue-50/50 border-t border-blue-100">
@@ -220,7 +352,6 @@ function BracketTree({
         <BracketTree round={prevRound} matchIndex={matchIndex * 2 + 1}
           bracket={bracket} onPick={onPick} onTeamInfo={onTeamInfo} />
       </div>
-      {/* Connector: vertical bar on left, horizontal center line */}
       <div className="self-stretch w-5 shrink-0 border-l-2 border-gray-200 relative">
         <div className="absolute top-1/2 left-0 w-full border-t-2 border-gray-200 -translate-y-px" />
       </div>
@@ -235,7 +366,7 @@ function BracketTree({
 
 /* ─── Bottom Sheet ─────────────────────────────────────────── */
 
-function BottomSheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+function BottomSheet({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -340,28 +471,67 @@ function ChampionBanner({ team }: { team: Team }) {
   );
 }
 
-/* ─── Main Component ───────────────────────────────────────── */
+/* ─── Inner Bracket (hydration-aware) ─────────────────────── */
 
-export default function BracketSimulator() {
+function BracketInner() {
   const { bracket, pickWinner, resetBracket, getBracketShareUrl, loadBracketFromUrl } = useBracketStore();
+  const { matches: liveMatches, hasLiveMatches, isMock } = useLiveMatches();
   const [activeRound, setActiveRound] = useState<keyof BracketState>('r32');
   const [viewMode, setViewMode] = useState<'list' | 'bracket'>('list');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedStadium, setSelectedStadium] = useState<Stadium | null>(null);
   const [toast, setToast] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  const liveScoreMap = useMemo(() => {
+    const map = new Map<string, LiveScore>();
+    for (const m of liveMatches) {
+      const homeId = (m as Match & { homeTeam: { id: string } }).homeTeam?.id;
+      const awayId = (m as Match & { awayTeam: { id: string } }).awayTeam?.id;
+      if (!homeId || !awayId) continue;
+
+      const live = isMatchLive(m.status);
+      const finished = isMatchFinished(m.status);
+      let winnerId: string | undefined;
+      if (finished && m.homeScore !== null && m.awayScore !== null) {
+        if (m.homeScore > m.awayScore) winnerId = homeId;
+        else if (m.awayScore > m.homeScore) winnerId = awayId;
+      }
+
+      const key = `${homeId}-${awayId}`;
+      map.set(key, {
+        homeScore: m.homeScore ?? 0,
+        awayScore: m.awayScore ?? 0,
+        status: m.status as MatchStatus,
+        minute: m.minute,
+        winnerId,
+      });
+    }
+    return map;
+  }, [liveMatches]);
+
+  function getLiveScore(match: BracketMatch): LiveScore | undefined {
+    if (!match.teamA || !match.teamB) return undefined;
+    return liveScoreMap.get(`${match.teamA.id}-${match.teamB.id}`)
+      ?? liveScoreMap.get(`${match.teamB.id}-${match.teamA.id}`);
+  }
 
   useEffect(() => {
-    setMounted(true);
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('b');
-    if (encoded) {
-      loadBracketFromUrl(encoded);
-      window.history.replaceState({}, '', '/bracket');
+    useBracketStore.persist.rehydrate();
+    setHydrated(true);
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const encoded = params.get('b');
+      if (encoded) {
+        loadBracketFromUrl(encoded);
+        window.history.replaceState({}, '', '/bracket');
+      }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShare = useCallback(async () => {
+    if (typeof window === 'undefined') return;
     try {
       const url = getBracketShareUrl();
       if (navigator.share) {
@@ -387,16 +557,8 @@ export default function BracketSimulator() {
     if (stadium) setSelectedStadium(stadium);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <div className="h-7 w-36 bg-gray-100 rounded animate-pulse" />
-        <div className="h-10 bg-gray-100 rounded-full animate-pulse" />
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 rounded-xl animate-pulse" />)}
-        </div>
-      </div>
-    );
+  if (!hydrated) {
+    return <BracketSkeleton />;
   }
 
   const champion = bracket.final[0]?.winner;
@@ -449,6 +611,19 @@ export default function BracketSimulator() {
 
       {champion && <ChampionBanner team={champion} />}
 
+      {/* Live results banner */}
+      {hasLiveMatches && !isMock && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 mb-4">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#185FA5]" />
+          </span>
+          <p className="text-xs text-[#185FA5] font-medium">
+            Real results auto-update · Tap a future match to predict
+          </p>
+        </div>
+      )}
+
       {viewMode === 'list' ? (
         <>
           {/* Pill nav */}
@@ -493,7 +668,8 @@ export default function BracketSimulator() {
             {activeMatches.map((match, idx) => (
               <MobileMatchCard key={match.id} match={match} round={activeRound} matchIndex={idx}
                 onPick={(team) => pickWinner(activeRound, idx, team)}
-                onTeamInfo={setSelectedTeam} onStadiumInfo={handleStadiumClick} />
+                onTeamInfo={setSelectedTeam} onStadiumInfo={handleStadiumClick}
+                liveScore={getLiveScore(match)} />
             ))}
           </div>
 
@@ -507,7 +683,6 @@ export default function BracketSimulator() {
           )}
         </>
       ) : (
-        /* ─── Horizontal Bracket View ──────────────────────── */
         <div className="overflow-auto -mx-4 px-4 pb-4">
           <div className="min-w-[800px]">
             <BracketTree round="final" matchIndex={0} bracket={bracket}
@@ -516,7 +691,6 @@ export default function BracketSimulator() {
         </div>
       )}
 
-      {/* Bottom sheets */}
       {selectedTeam && (
         <BottomSheet onClose={() => setSelectedTeam(null)}>
           <TeamInfoContent team={selectedTeam} />
@@ -528,5 +702,15 @@ export default function BracketSimulator() {
         </BottomSheet>
       )}
     </div>
+  );
+}
+
+/* ─── Main Export (wrapped in error boundary) ─────────────── */
+
+export default function BracketSimulator() {
+  return (
+    <BracketErrorBoundary>
+      <BracketInner />
+    </BracketErrorBoundary>
   );
 }

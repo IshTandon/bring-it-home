@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { PLAYERS } from '@/lib/data';
 import PlayerCard from './PlayerCard';
 import type { Player } from '@/types';
 
 const ComparisonPanel = dynamic(() => import('./ComparisonPanel'), { ssr: false });
+
+const CARD_HEIGHT = 80;
+const OVERSCAN = 5;
 
 const POS_GROUPS: { label: string; positions: string[] }[] = [
   { label: 'All', positions: [] },
@@ -16,10 +19,55 @@ const POS_GROUPS: { label: string; positions: string[] }[] = [
   { label: 'GK',  positions: ['GK'] },
 ];
 
+function PlayerCardSkeleton() {
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3.5 w-32 bg-gray-200 animate-pulse rounded" />
+        <div className="h-2.5 w-20 bg-gray-200 animate-pulse rounded" />
+      </div>
+      <div className="w-8 h-4 bg-gray-200 animate-pulse rounded" />
+    </div>
+  );
+}
+
 export default function PlayerGrid() {
   const [search, setSearch] = useState('');
   const [activeGroup, setActiveGroup] = useState('All');
   const [compared, setCompared] = useState<[Player | null, Player | null]>([null, null]);
+  const comparisonRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(800);
+
+  useEffect(() => {
+    if (compared[0] && compared[1]) {
+      setTimeout(() => {
+        comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [compared]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(container);
+    setContainerHeight(container.clientHeight);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (container) setScrollTop(container.scrollTop);
+  }, []);
 
   const filtered = useMemo(() => {
     let result = PLAYERS;
@@ -41,6 +89,20 @@ export default function PlayerGrid() {
 
     return result;
   }, [search, activeGroup]);
+
+  const { startIndex, endIndex, totalHeight, offsetY } = useMemo(() => {
+    const itemHeight = CARD_HEIGHT + 12;
+    const total = filtered.length * itemHeight;
+    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - OVERSCAN);
+    const visibleCount = Math.ceil(containerHeight / itemHeight);
+    const end = Math.min(filtered.length - 1, start + visibleCount + OVERSCAN * 2);
+    return {
+      startIndex: start,
+      endIndex: end,
+      totalHeight: total,
+      offsetY: start * itemHeight,
+    };
+  }, [filtered.length, scrollTop, containerHeight]);
 
   const handleClear = useCallback(() => {
     setSearch('');
@@ -68,6 +130,11 @@ export default function PlayerGrid() {
 
   const compareCount = (compared[0] ? 1 : 0) + (compared[1] ? 1 : 0);
 
+  const visiblePlayers = useMemo(
+    () => filtered.slice(startIndex, endIndex + 1),
+    [filtered, startIndex, endIndex],
+  );
+
   return (
     <div>
       <div className="mb-4">
@@ -78,7 +145,6 @@ export default function PlayerGrid() {
         </p>
       </div>
 
-      {/* Compare hint */}
       {compareCount > 0 && compareCount < 2 && (
         <div className="mb-3 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
           <p className="text-xs text-blue-700">
@@ -90,9 +156,10 @@ export default function PlayerGrid() {
         </div>
       )}
 
-      {/* Comparison panel */}
       {compared[0] && compared[1] && (
-        <ComparisonPanel playerA={compared[0]} playerB={compared[1]} onClear={handleClearCompare} />
+        <div ref={comparisonRef} className="animate-compare-pop">
+          <ComparisonPanel playerA={compared[0]} playerB={compared[1]} onClear={handleClearCompare} />
+        </div>
       )}
 
       <div className="relative mb-3">
@@ -148,15 +215,24 @@ export default function PlayerGrid() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              isCompareSelected={compareIds.has(player.id)}
-              onToggleCompare={handleToggleCompare}
-            />
-          ))}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="overflow-y-auto"
+          style={{ height: 'calc(100vh - 320px)', minHeight: 400 }}
+        >
+          <div style={{ height: totalHeight, position: 'relative' }}>
+            <div style={{ transform: `translateY(${offsetY}px)` }} className="space-y-3">
+              {visiblePlayers.map((player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  isCompareSelected={compareIds.has(player.id)}
+                  onToggleCompare={handleToggleCompare}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

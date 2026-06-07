@@ -1,16 +1,23 @@
 {
-  "name": "Bring It Home — FIFA World Cup 2026",
+  "name": "Who's Gonna Bring It Home?",
   "short_name": "Bring It Home",
-  "description": "Every team starts the tournament. Only one brings it home.",
+  "description": "Every team starts the tournament. Only one nation brings it home.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
+  "background_color": "#0A1628",
+  "theme_color": "#0A1628",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
