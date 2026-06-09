@@ -125,9 +125,7 @@ function mapApiPlayer(raw: ApiPlayer): Player {
 }
 
 export async function GET() {
-  const useMock = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || !process.env.FOOTBALL_API_KEY;
-
-  if (!useMock) {
+  if (process.env.FOOTBALL_API_KEY) {
     try {
       const raw = await getAllSquadPlayers() as ApiPlayer[];
       const players = raw.map(mapApiPlayer);
@@ -137,13 +135,13 @@ export async function GET() {
         lastUpdated: new Date().toISOString(),
       });
     } catch (err) {
-      console.error('API-Football players fetch failed, falling back to mock:', err);
+      if (process.env.NODE_ENV === 'development') console.error('[players] API fetch failed:', err);
     }
   }
 
   return NextResponse.json({
     players: PLAYERS,
-    source: 'mock',
+    source: 'static',
     lastUpdated: new Date().toISOString(),
   });
 }

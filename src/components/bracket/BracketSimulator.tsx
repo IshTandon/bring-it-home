@@ -6,7 +6,10 @@ import { useBracketStore, useBracketActions } from '@/lib/store';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { STADIUMS } from '@/lib/data';
 import { isMatchLive, isMatchFinished, formatMatchMinute } from '@/lib/matchUtils';
+import { detectCalledIt, saveCalledItMoment } from '@/lib/called-it';
 import MatchMinuteBadge from '@/components/ui/MatchMinuteBadge';
+import MyMoments from '@/components/bracket/MyMoments';
+import ICalledItCard from '@/components/bracket/ICalledItCard';
 import type { Team, BracketMatch, BracketState, Stadium, Match, MatchStatus } from '@/types';
 
 interface LiveScore {
@@ -39,13 +42,13 @@ class BracketErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-full bg-red-900/20 flex items-center justify-center mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Something went wrong</h2>
-          <p className="text-sm text-gray-500 mb-6 max-w-xs">
+          <h2 className="text-lg font-semibold text-dark-text-primary mb-1">Something went wrong</h2>
+          <p className="text-sm text-dark-text-muted mb-6 max-w-xs">
             The bracket ran into an issue. Reset to start fresh — your picks will be cleared.
           </p>
           <button type="button" onClick={this.handleReset}
@@ -66,39 +69,39 @@ function BracketSkeleton() {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
-          <div className="h-3 w-20 bg-gray-100 rounded animate-pulse mb-2" />
-          <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
+          <div className="h-3 w-20 bg-dark-border rounded animate-pulse mb-2" />
+          <div className="h-6 w-40 bg-dark-border rounded animate-pulse" />
         </div>
         <div className="flex gap-1.5">
-          <div className="h-8 w-16 bg-gray-100 rounded-lg animate-pulse" />
-          <div className="h-8 w-16 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-8 w-16 bg-dark-border rounded-lg animate-pulse" />
+          <div className="h-8 w-16 bg-dark-border rounded-lg animate-pulse" />
         </div>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
+      <div className="h-1.5 bg-dark-border rounded-full animate-pulse" />
       <div className="flex gap-1.5 overflow-hidden pb-1">
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="h-9 w-20 bg-gray-100 rounded-full animate-pulse shrink-0" />
+          <div key={i} className="h-9 w-20 bg-dark-border rounded-full animate-pulse shrink-0" />
         ))}
       </div>
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-              <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
+          <div key={i} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden shadow-sm">
+            <div className="px-4 py-2 bg-dark-border/30 border-b border-dark-border">
+              <div className="h-3 w-32 skeleton rounded animate-pulse" />
             </div>
             <div className="flex items-center px-4 py-4 gap-2">
               <div className="flex-1 flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                <div className="w-6 h-6 skeleton rounded animate-pulse" />
+                <div className="h-4 w-20 skeleton rounded animate-pulse" />
               </div>
-              <div className="h-3 w-10 bg-gray-100 rounded animate-pulse" />
+              <div className="h-3 w-10 bg-dark-border rounded animate-pulse" />
               <div className="flex-1 flex items-center gap-2 justify-end">
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
-                <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-20 skeleton rounded animate-pulse" />
+                <div className="w-6 h-6 skeleton rounded animate-pulse" />
               </div>
             </div>
-            <div className="border-t border-gray-100 px-4 py-2">
-              <div className="h-3 w-28 bg-gray-100 rounded animate-pulse mx-auto" />
+            <div className="border-t border-dark-border px-4 py-2">
+              <div className="h-3 w-28 bg-dark-border rounded animate-pulse mx-auto" />
             </div>
           </div>
         ))}
@@ -193,11 +196,20 @@ const TeamSide = memo(function TeamSide({
   placeholder: string; align: 'left' | 'right';
   onInfo: (t: Team) => void; onPick: (t: Team) => void; canPick: boolean;
 }) {
+  const [flashing, setFlashing] = useState(false);
+
+  const handlePick = useCallback((t: Team) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+    setFlashing(true);
+    setTimeout(() => setFlashing(false), 300);
+    onPick(t);
+  }, [onPick]);
+
   if (!team) {
     return (
       <div className={`flex-1 flex items-center gap-2 min-w-0 ${align === 'right' ? 'justify-end flex-row-reverse' : ''}`}>
-        <div className="w-5 h-5 rounded-full bg-gray-100 shrink-0" />
-        <span className="text-[11px] text-gray-300 font-medium">TBD</span>
+        <div className="w-5 h-5 rounded-full bg-dark-border shrink-0" />
+        <span className="text-[11px] text-dark-text-muted/50 font-medium">TBD</span>
       </div>
     );
   }
@@ -211,18 +223,19 @@ const TeamSide = memo(function TeamSide({
         {team.flag}
       </Link>
       <div className="flex flex-col min-w-0">
-        <button type="button" onClick={() => canPick ? onPick(team) : onInfo(team)}
-          className={`text-sm truncate transition-colors min-w-0 text-left min-h-[44px] flex items-center
-            ${isWinner ? 'font-bold text-[#185FA5]' : 'font-medium text-gray-800'}
-            ${canPick ? 'active:text-[#185FA5]' : ''}
+        <button type="button" onClick={() => canPick ? handlePick(team) : onInfo(team)}
+          className={`text-sm truncate transition-colors duration-150 min-w-0 text-left min-h-[44px] flex items-center rounded-md px-1
+            ${flashing ? 'bg-dark-accent/25' : ''}
+            ${isWinner ? 'font-bold text-dark-accent' : 'font-medium text-dark-text-primary'}
+            ${canPick ? 'active:bg-dark-accent/20' : ''}
           `}>
           {team.name}
         </button>
         {isLoser && canPick && (
-          <span className="text-[10px] text-gray-400">← change</span>
+          <span className="text-[10px] text-dark-text-muted">← change</span>
         )}
       </div>
-      {isWinner && <span className="text-[#185FA5] text-xs shrink-0 font-bold">✓</span>}
+      {isWinner && <span className="text-dark-accent text-xs shrink-0 font-bold">✓</span>}
     </div>
   );
 });
@@ -246,18 +259,18 @@ const MobileMatchCard = memo(function MobileMatchCard({
   const winnerId = liveScore?.winnerId ?? match.winner?.id;
 
   return (
-    <div className={`bg-white border rounded-xl overflow-hidden shadow-sm transition-[border-color,box-shadow] duration-200 will-change-transform
-      ${realLive ? 'border-red-200 ring-1 ring-red-100' : hasWinner ? 'border-[#185FA5]/30' : 'border-gray-200'}
+    <div className={`bg-dark-surface border rounded-xl overflow-hidden shadow-sm transition-[border-color,box-shadow] duration-200 will-change-transform
+      ${realLive ? 'border-red-800/50 ring-1 ring-red-100' : hasWinner ? 'border-[#185FA5]/30' : 'border-dark-border'}
       ${isFinal ? 'ring-2 ring-amber-300' : ''}
     `}>
-      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-50 border-b border-gray-100">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-dark-border/30 border-b border-dark-border">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">
           {ROUND_NAV.find(r => r.key === round)?.full} · M{matchIndex + 1}
         </span>
         {hasRealScore ? (
           <MatchMinuteBadge status={liveScore.status} minute={liveScore.minute} time={match.time} />
         ) : (
-          <span className="text-[10px] text-gray-300 tabular-nums">{ROUND_DATES[round]}</span>
+          <span className="text-[10px] text-dark-text-muted/50 tabular-nums">{ROUND_DATES[round]}</span>
         )}
       </div>
 
@@ -271,7 +284,7 @@ const MobileMatchCard = memo(function MobileMatchCard({
         <div className="flex flex-col items-center shrink-0 px-2">
           {hasRealScore ? (
             <>
-              <span className={`text-lg font-bold tabular-nums ${realLive ? 'text-gray-900' : 'text-[#185FA5]'}`}>
+              <span className={`text-lg font-bold tabular-nums ${realLive ? 'text-dark-text-primary' : 'text-dark-accent'}`}>
                 {liveScore.homeScore} – {liveScore.awayScore}
               </span>
               {realLive && liveScore.minute && (
@@ -281,7 +294,7 @@ const MobileMatchCard = memo(function MobileMatchCard({
               )}
             </>
           ) : (
-            <span className="text-[10px] text-gray-300 font-medium">{match.time}</span>
+            <span className="text-[10px] text-dark-text-muted/50 font-medium">{match.time}</span>
           )}
         </div>
 
@@ -292,24 +305,24 @@ const MobileMatchCard = memo(function MobileMatchCard({
           onInfo={onTeamInfo} onPick={onPick} canPick={canPick} />
       </div>
 
-      <div className="border-t border-gray-100 px-4 py-1.5 text-center">
+      <div className="border-t border-dark-border px-4 py-1.5 text-center">
         <button type="button" onClick={() => onStadiumInfo(match.stadium)}
-          className="text-[10px] text-gray-400 active:text-gray-600 transition-colors">
+          className="text-[10px] text-dark-text-muted active:text-dark-text-muted transition-colors">
           📍 {match.stadium}
         </button>
       </div>
 
       {hasRealScore && (
-        <div className="px-4 py-1.5 bg-blue-50/50 border-t border-blue-100">
-          <p className="text-[10px] text-[#185FA5] text-center font-medium">
+        <div className="px-4 py-1.5 bg-blue-900/20/50 border-t border-blue-100">
+          <p className="text-[10px] text-dark-accent text-center font-medium">
             {realLive ? 'Live result · auto-updating' : 'Final result'}
           </p>
         </div>
       )}
 
       {canPick && !hasRealScore && (
-        <div className="px-4 py-2 bg-blue-50/50 border-t border-blue-100">
-          <p className="text-[10px] text-[#185FA5] text-center font-medium">
+        <div className="px-4 py-2 bg-blue-900/20/50 border-t border-blue-100">
+          <p className="text-[10px] text-dark-accent text-center font-medium">
             {hasWinner ? 'Tap the other team to change your pick' : 'Tap a team to advance'}
           </p>
         </div>
@@ -320,6 +333,10 @@ const MobileMatchCard = memo(function MobileMatchCard({
 
 /* ─── Compact Card (Horizontal Bracket, memoized) ──────────── */
 
+const ROUND_CARD_WIDTHS: Record<keyof BracketState, string> = {
+  r32: 'w-[140px]', r16: 'w-[150px]', qf: 'w-[160px]', sf: 'w-[160px]', final: 'w-[168px]',
+};
+
 const CompactCard = memo(function CompactCard({
   match, round, matchIndex, onPick, onTeamInfo,
 }: {
@@ -329,46 +346,55 @@ const CompactCard = memo(function CompactCard({
 }) {
   const canPick = !!(match.teamA && match.teamB);
   const isFinal = round === 'final';
+  const [flashId, setFlashId] = useState<string | null>(null);
+
+  const handlePick = useCallback((team: Team) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(10);
+    setFlashId(team.id);
+    setTimeout(() => setFlashId(null), 300);
+    onPick(round, matchIndex, team);
+  }, [onPick, round, matchIndex]);
 
   function Slot({ team, isWinner, isLoser, placeholder }: {
     team: Team | null; isWinner: boolean; isLoser: boolean; placeholder: string;
   }) {
     if (!team) {
       return (
-        <div className="flex items-center gap-1.5 px-2 min-h-[22px]">
-          <div className="w-3.5 h-3.5 rounded-full bg-gray-100 shrink-0" />
-          <span className="text-[9px] text-gray-300 font-medium">TBD</span>
+        <div className="flex items-center gap-1.5 px-3 py-2.5 min-h-[44px]">
+          <div className="w-4 h-4 rounded-full bg-dark-border shrink-0" />
+          <span className="text-[10px] text-dark-text-muted/50 font-medium">TBD</span>
         </div>
       );
     }
+    const isFlashing = flashId === team.id;
     return (
-      <div className={`flex items-center gap-1.5 px-2 w-full min-h-[22px] transition-colors duration-150 animate-team-slide-in
-        ${isWinner ? 'bg-[#185FA5]/10' : ''} ${isLoser ? 'opacity-40' : ''}
-      `}>
-        <Link href={`/teams/${team.id}`} className="text-xs shrink-0">{team.flag}</Link>
-        <button type="button"
-          className={`text-[10px] truncate text-left flex-1 min-h-[44px] flex items-center ${isWinner ? 'font-bold text-[#185FA5]' : 'text-gray-700'}
-            ${canPick ? 'hover:text-[#185FA5] active:text-[#185FA5]' : ''}
-          `}
-          onClick={() => canPick ? onPick(round, matchIndex, team) : onTeamInfo(team)}>
+      <button type="button"
+        onClick={() => canPick ? handlePick(team) : onTeamInfo(team)}
+        className={`flex items-center gap-1.5 px-3 py-2.5 w-full min-h-[44px] transition-colors duration-150 text-left
+          ${isFlashing ? 'bg-dark-accent/25' : isWinner ? 'bg-dark-accent/10' : ''}
+          ${isLoser ? 'opacity-40' : ''}
+          ${canPick ? 'active:bg-dark-accent/20' : ''}
+        `}
+      >
+        <span className="text-sm shrink-0">{team.flag}</span>
+        <span className={`text-[13px] truncate flex-1 ${isWinner ? 'font-bold text-dark-accent' : 'text-dark-text-primary'}`}>
           {team.name}
-        </button>
-        {isWinner && <span className="text-[9px] text-[#185FA5] ml-auto shrink-0 font-bold">✓</span>}
-        {isLoser && canPick && <span className="text-[8px] text-gray-400 ml-auto shrink-0">← change</span>}
-      </div>
+        </span>
+        {isWinner && <span className="text-[10px] text-dark-accent shrink-0 font-bold">✓</span>}
+      </button>
     );
   }
 
   return (
-    <div className={`w-[132px] bg-white border rounded-lg overflow-hidden shrink-0 shadow-sm will-change-transform
-      ${isFinal ? 'ring-2 ring-amber-300 border-amber-200' : hasWinnerBorder(match)}
+    <div className={`${ROUND_CARD_WIDTHS[round]} bg-dark-surface border rounded-lg overflow-hidden shrink-0 shadow-sm will-change-transform
+      ${isFinal ? 'ring-2 ring-amber-300 border-amber-800/50' : hasWinnerBorder(match)}
     `}>
       <Slot team={match.teamA} isWinner={match.winner?.id === match.teamA?.id}
         isLoser={!!match.winner && match.winner.id !== match.teamA?.id}
         placeholder={getSlotLabel(round, matchIndex, 'A')} />
-      <div className="relative border-t border-gray-100">
+      <div className="relative border-t border-dark-border">
         {round === 'r32' && (
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-1 text-[7px] font-bold uppercase tracking-wider text-gray-300 leading-none">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-dark-surface px-1 text-[7px] font-bold uppercase tracking-wider text-dark-text-muted/50 leading-none">
             VS
           </span>
         )}
@@ -381,7 +407,7 @@ const CompactCard = memo(function CompactCard({
 });
 
 function hasWinnerBorder(match: BracketMatch): string {
-  return match.winner ? 'border-[#185FA5]/30' : 'border-gray-200';
+  return match.winner ? 'border-[#185FA5]/30' : 'border-dark-border';
 }
 
 /* ─── Bracket Tree (Recursive Horizontal) ─────────────────── */
@@ -400,7 +426,7 @@ const BracketTree = memo(function BracketTree({
       <div className="flex items-center py-[2px]">
         <CompactCard match={bracket[round][matchIndex]} round={round}
           matchIndex={matchIndex} onPick={onPick} onTeamInfo={onTeamInfo} />
-        <div className="w-3 border-t-2 border-gray-200 shrink-0" />
+        <div className="w-3 border-t-2 border-dark-border shrink-0" />
       </div>
     );
   }
@@ -414,13 +440,13 @@ const BracketTree = memo(function BracketTree({
         <BracketTree round={prevRound} matchIndex={matchIndex * 2 + 1}
           bracket={bracket} onPick={onPick} onTeamInfo={onTeamInfo} />
       </div>
-      <div className="self-stretch w-5 shrink-0 border-l-2 border-gray-200 relative">
-        <div className="absolute top-1/2 left-0 w-full border-t-2 border-gray-200 -translate-y-px" />
+      <div className="self-stretch w-5 shrink-0 border-l-2 border-dark-border relative">
+        <div className="absolute top-1/2 left-0 w-full border-t-2 border-dark-border -translate-y-px" />
       </div>
       <div className="self-center flex items-center">
         <CompactCard match={bracket[round][matchIndex]} round={round}
           matchIndex={matchIndex} onPick={onPick} onTeamInfo={onTeamInfo} />
-        {round !== 'final' && <div className="w-3 border-t-2 border-gray-200 shrink-0" />}
+        {round !== 'final' && <div className="w-3 border-t-2 border-dark-border shrink-0" />}
       </div>
     </div>
   );
@@ -455,7 +481,7 @@ const LazyRoundMatches = memo(function LazyRoundMatches({
     return (
       <div ref={sentinelRef} className="space-y-3">
         {matches.map((_, idx) => (
-          <div key={idx} className="h-32 bg-gray-50 rounded-xl animate-pulse" />
+          <div key={idx} className="h-32 bg-dark-border/30 rounded-xl animate-pulse" />
         ))}
       </div>
     );
@@ -484,7 +510,7 @@ function BottomSheet({ onClose, children }: { onClose: () => void; children: Rea
   return (
     <div className="fixed inset-0 z-50" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl max-h-[85vh] overflow-y-auto animate-slide-up"
+      <div className="absolute bottom-0 left-0 right-0 bg-dark-surface rounded-t-2xl shadow-xl max-h-[85vh] overflow-y-auto animate-slide-up"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-gray-300" />
@@ -503,8 +529,8 @@ function TeamInfoContent({ team }: { team: Team }) {
       <div className="flex items-center gap-3 mb-4 pt-2">
         <Link href={`/teams/${team.id}`} className="text-3xl">{team.flag}</Link>
         <div>
-          <Link href={`/teams/${team.id}`} className="text-lg font-semibold text-gray-900 hover:text-[#185FA5] transition-colors">{team.name}</Link>
-          <p className="text-xs text-gray-400">FIFA Ranking #{team.rank}</p>
+          <Link href={`/teams/${team.id}`} className="text-lg font-semibold text-dark-text-primary hover:text-dark-accent transition-colors">{team.name}</Link>
+          <p className="text-xs text-dark-text-muted">FIFA Ranking #{team.rank}</p>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2 mb-5">
@@ -512,17 +538,17 @@ function TeamInfoContent({ team }: { team: Team }) {
         <div className="stat-box"><div className="stat-num">{team.titles}</div><div className="stat-lbl">Titles</div></div>
         <div className="stat-box"><div className="stat-num">{team.finals}</div><div className="stat-lbl">Finals</div></div>
       </div>
-      <div className="space-y-1.5 text-sm text-gray-600 mb-5">
-        <p><span className="font-medium text-gray-900">Coach:</span> {team.coach}</p>
-        <p><span className="font-medium text-gray-900">Style:</span> {team.style}</p>
-        <p><span className="font-medium text-gray-900">Best result:</span> {team.bestResult}</p>
+      <div className="space-y-1.5 text-sm text-dark-text-muted mb-5">
+        <p><span className="font-medium text-dark-text-primary">Coach:</span> {team.coach}</p>
+        <p><span className="font-medium text-dark-text-primary">Style:</span> {team.style}</p>
+        <p><span className="font-medium text-dark-text-primary">Best result:</span> {team.bestResult}</p>
       </div>
       {team.facts.length > 0 && (
         <div>
-          <h3 className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-2">Did you know?</h3>
+          <h3 className="text-xs font-medium uppercase tracking-widest text-dark-text-muted mb-2">Did you know?</h3>
           <ul className="space-y-2">
             {team.facts.map((fact, i) => (
-              <li key={i} className="text-sm text-gray-600 leading-relaxed flex gap-2">
+              <li key={i} className="text-sm text-dark-text-muted leading-relaxed flex gap-2">
                 <span className="text-blue-400 font-bold shrink-0">•</span>{fact}
               </li>
             ))}
@@ -539,24 +565,24 @@ function StadiumInfoContent({ stadium }: { stadium: Stadium }) {
   return (
     <div className="px-5 pb-8">
       <div className="pt-2 mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">{stadium.name}</h2>
-        <p className="text-xs text-gray-400">{stadium.city}, {stadium.country}</p>
+        <h2 className="text-lg font-semibold text-dark-text-primary">{stadium.name}</h2>
+        <p className="text-xs text-dark-text-muted">{stadium.city}, {stadium.country}</p>
       </div>
       <div className="grid grid-cols-3 gap-2 mb-5">
         <div className="stat-box"><div className="stat-num text-base">{(stadium.capacity / 1000).toFixed(0)}k</div><div className="stat-lbl">Capacity</div></div>
         <div className="stat-box"><div className="stat-num text-base">{stadium.opened}</div><div className="stat-lbl">Opened</div></div>
         <div className="stat-box"><div className="stat-num text-base">{stadium.cost.replace('$', '').split(' ')[0]}</div><div className="stat-lbl">Cost</div></div>
       </div>
-      <div className="space-y-1.5 text-sm text-gray-600 mb-5">
-        <p><span className="font-medium text-gray-900">Surface:</span> {stadium.surface}</p>
-        <p><span className="font-medium text-gray-900">Hosting:</span> {stadium.host}</p>
+      <div className="space-y-1.5 text-sm text-dark-text-muted mb-5">
+        <p><span className="font-medium text-dark-text-primary">Surface:</span> {stadium.surface}</p>
+        <p><span className="font-medium text-dark-text-primary">Hosting:</span> {stadium.host}</p>
       </div>
       {stadium.facts.length > 0 && (
         <div>
-          <h3 className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-2">Did you know?</h3>
+          <h3 className="text-xs font-medium uppercase tracking-widest text-dark-text-muted mb-2">Did you know?</h3>
           <ul className="space-y-2">
             {stadium.facts.map((fact, i) => (
-              <li key={i} className="text-sm text-gray-600 leading-relaxed flex gap-2">
+              <li key={i} className="text-sm text-dark-text-muted leading-relaxed flex gap-2">
                 <span className="text-green-500 font-bold shrink-0">•</span>{fact}
               </li>
             ))}
@@ -571,10 +597,10 @@ function StadiumInfoContent({ stadium }: { stadium: Stadium }) {
 
 function ChampionBanner({ team }: { team: Team }) {
   return (
-    <Link href={`/teams/${team.id}`} className="block rounded-xl bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border border-amber-200 p-5 text-center mb-4">
+    <Link href={`/teams/${team.id}`} className="block rounded-xl bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border border-amber-800/50 p-5 text-center mb-4">
       <p className="text-[10px] font-medium uppercase tracking-widest text-amber-600 mb-1">World Cup 2026 Champion</p>
       <div className="text-4xl mb-1">{team.flag}</div>
-      <h2 className="text-xl font-semibold text-gray-900">{team.name}</h2>
+      <h2 className="text-xl font-semibold text-dark-text-primary">{team.name}</h2>
       <p className="text-sm text-amber-700 mt-0.5 italic">brings it home.</p>
     </Link>
   );
@@ -591,45 +617,96 @@ const EnlargedBracketView = memo(function EnlargedBracketView({
 }) {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const [showScrollHint, setShowScrollHint] = useState(true);
+  const [activeTab, setActiveTab] = useState<keyof BracketState>('r32');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPosRef = useRef(0);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     const timer = setTimeout(() => setIsTransitioning(false), 300);
-
-    return () => {
-      document.body.style.overflow = prev;
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
+      scrollPosRef.current = el.scrollLeft;
       if (el.scrollLeft > 150) setShowScrollHint(false);
+      const positions = ROUND_LABEL_CENTERS;
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      for (let i = 0; i < positions.length; i++) {
+        const dist = Math.abs(el.scrollLeft + el.clientWidth / 2 - positions[i]);
+        if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+      }
+      setActiveTab(ROUNDS[closestIdx]);
     };
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleTabClick = useCallback((round: keyof BracketState) => {
+    const idx = ROUNDS.indexOf(round);
+    const el = scrollRef.current;
+    if (!el || idx < 0) return;
+    const targetX = Math.max(0, ROUND_LABEL_CENTERS[idx] - el.clientWidth / 2);
+    el.scrollTo({ left: targetX, behavior: 'smooth' });
+    setActiveTab(round);
+  }, []);
+
+  const handlePick = useCallback((round: keyof BracketState, idx: number, team: Team) => {
+    const savedPos = scrollRef.current?.scrollLeft ?? 0;
+    onPick(round, idx, team);
+    requestAnimationFrame(() => {
+      if (scrollRef.current) scrollRef.current.scrollLeft = savedPos;
+    });
+  }, [onPick]);
+
   return (
     <div className="relative -mx-4">
+      {/* Round selector tab bar */}
+      <div className="flex gap-1.5 px-4 pb-2 overflow-x-auto scrollbar-none">
+        {ROUND_NAV.map(r => {
+          const isActive = r.key === activeTab;
+          const matches = bracket[r.key];
+          const decided = matches.filter(m => m.winner).length;
+          const allDone = decided === matches.length && matches.length > 0;
+          return (
+            <button key={r.key} type="button" onClick={() => handleTabClick(r.key)}
+              className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95
+                ${isActive ? 'bg-dark-accent text-dark-bg shadow-sm'
+                  : allDone ? 'bg-green-900/30 text-green-400 border border-green-800/50'
+                  : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
+              `}>
+              {r.label}
+              {allDone && !isActive && (
+                <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Bracket horizontal scroll — page scroll passes through vertically */}
       <div
         ref={scrollRef}
-        className="overflow-x-auto px-4 pb-4 overscroll-contain"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="overflow-x-auto overflow-y-visible px-4 pb-4"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x pan-y',
+          overscrollBehaviorX: 'contain',
+        }}
       >
         <div
-          className={`min-w-[800px] will-change-transform ${isTransitioning ? '[&_*:not(button):not(a)]:pointer-events-none' : ''}`}
+          className={`min-w-[900px] will-change-transform ${isTransitioning ? '[&_*:not(button):not(a)]:pointer-events-none' : ''}`}
         >
-          <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-100 mb-3 py-2">
+          <div className="sticky top-0 z-10 bg-dark-surface/90 backdrop-blur-sm border-b border-dark-border mb-3 py-2">
             <div className="relative h-5">
               {ROUND_NAV.map((r, i) => (
                 <span key={r.key}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-widest text-gray-400 whitespace-nowrap"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-widest text-dark-text-muted whitespace-nowrap"
                   style={{ left: ROUND_LABEL_CENTERS[i] }}>
                   {r.full}
                 </span>
@@ -637,11 +714,11 @@ const EnlargedBracketView = memo(function EnlargedBracketView({
             </div>
           </div>
           <BracketTree round="final" matchIndex={0} bracket={bracket}
-            onPick={onPick} onTeamInfo={onTeamInfo} />
+            onPick={handlePick} onTeamInfo={onTeamInfo} />
         </div>
       </div>
       {showScrollHint && (
-        <div className="absolute top-0 right-0 bottom-0 w-16 pointer-events-none flex items-center justify-end pr-2"
+        <div className="absolute top-12 right-0 bottom-0 w-16 pointer-events-none flex items-center justify-end pr-2"
           style={{ background: 'linear-gradient(to right, transparent, rgba(10,14,26,0.6))' }}>
           <span className="text-white/70 text-xs font-medium animate-pulse">→</span>
         </div>
@@ -764,9 +841,35 @@ function BracketInner() {
     }
   }, [hydrated, decidedMatches, totalMatches]);
 
+  // "I Called It" detection: check bracket picks against finished live matches
+  const [calledItMoment, setCalledItMoment] = useState<import('@/types').CalledItMoment | null>(null);
+  const detectedMomentsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const ROUNDS_TO_CHECK: (keyof BracketState)[] = ['r32', 'r16', 'qf', 'sf', 'final'];
+
+    for (const round of ROUNDS_TO_CHECK) {
+      for (const match of bracket[round]) {
+        if (!match.winner || !match.teamA || !match.teamB) continue;
+        if (detectedMomentsRef.current.has(match.id)) continue;
+
+        const liveScore = getLiveScore(match);
+        if (!liveScore?.winnerId) continue;
+
+        const moment = detectCalledIt(match, liveScore.winnerId);
+        if (moment) {
+          detectedMomentsRef.current.add(match.id);
+          saveCalledItMoment(moment);
+          setCalledItMoment(moment);
+        }
+      }
+    }
+  }, [hydrated, liveScoreMap, bracket, getLiveScore]);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setViewMode('bracket');
+      setViewMode('list');
     }
   }, []);
 
@@ -807,12 +910,12 @@ function BracketInner() {
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">Knockout stage</p>
-          <h1 className="text-xl font-semibold text-gray-900">Build your bracket</h1>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Knockout stage</p>
+          <h1 className="text-xl font-semibold text-dark-text-primary">Build your bracket</h1>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <button type="button" onClick={handleToggleView}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-full bg-white text-gray-600 transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-95">
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-dark-border rounded-full bg-dark-surface text-dark-text-muted transition-all hover:bg-dark-border/30 hover:border-gray-300 active:scale-95">
             {viewMode === 'list' ? (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -837,14 +940,14 @@ function BracketInner() {
       {/* Progress */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-gray-500 tabular-nums">
+          <span className="text-xs font-medium text-dark-text-muted tabular-nums">
             {decidedMatches} of {totalMatches} matches predicted
           </span>
           {milestoneMsg && (
             <span className="text-xs font-semibold text-amber-600 animate-milestone-pop">{milestoneMsg}</span>
           )}
         </div>
-        <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="w-full h-2.5 bg-dark-border rounded-full overflow-hidden">
           <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }} />
         </div>
@@ -855,12 +958,12 @@ function BracketInner() {
 
       {/* Live results banner */}
       {hasLiveMatches && !isMock && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 mb-4">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-900/20 border border-blue-800/50 mb-4">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#185FA5]" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-dark-accent" />
           </span>
-          <p className="text-xs text-[#185FA5] font-medium">
+          <p className="text-xs text-dark-accent font-medium">
             Real results auto-update · Tap a future match to predict
           </p>
         </div>
@@ -881,11 +984,11 @@ function BracketInner() {
                 <button key={r.key} type="button" onClick={() => setActiveRound(r.key)}
                   className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all active:scale-95 will-change-transform
                     ${isActive ? 'bg-gray-900 text-white shadow-sm'
-                      : allDone ? 'bg-green-50 text-green-700 border border-green-200'
-                      : 'bg-white text-gray-500 border border-gray-200'}
+                      : allDone ? 'bg-green-900/30 text-green-400 border border-green-800/50'
+                      : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
                   `}>
                   {r.label}
-                  <span className={`text-[10px] tabular-nums ${isActive ? 'text-gray-300' : allDone ? 'text-green-500' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] tabular-nums ${isActive ? 'text-dark-text-muted/50' : allDone ? 'text-green-500' : 'text-dark-text-muted'}`}>
                     {decided}/{total}
                   </span>
                   {allDone && !isActive && (
@@ -900,11 +1003,11 @@ function BracketInner() {
 
           {/* Round heading */}
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-900">{ROUND_NAV.find(r => r.key === activeRound)?.full}</h2>
-            <span className="text-xs text-gray-400">{activeDecided} of {activeMatches.length} decided</span>
+            <h2 className="text-sm font-semibold text-dark-text-primary">{ROUND_NAV.find(r => r.key === activeRound)?.full}</h2>
+            <span className="text-xs text-dark-text-muted">{activeDecided} of {activeMatches.length} decided</span>
           </div>
 
-          <p className="text-xs text-gray-400 mb-3">Tap a team name to advance them. Tap a flag for info.</p>
+          <p className="text-xs text-dark-text-muted mb-3">Tap a team name to advance them. Tap a flag for info.</p>
 
           {isLateRound ? (
             <LazyRoundMatches
@@ -927,8 +1030,8 @@ function BracketInner() {
           )}
 
           {roundComplete && nextRound && (
-            <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 text-center">
-              <p className="text-sm font-medium text-green-800 mb-2">All matches decided.</p>
+            <div className="mt-4 p-4 rounded-xl bg-green-900/20 border border-green-800/50 text-center">
+              <p className="text-sm font-medium text-green-400 mb-2">All matches decided.</p>
               <button type="button" onClick={() => setActiveRound(nextRound)} className="btn-primary text-sm px-5 py-2">
                 Continue to {ROUND_NAV.find(r => r.key === nextRound)?.full}
               </button>
@@ -953,6 +1056,9 @@ function BracketInner() {
           <StadiumInfoContent stadium={selectedStadium} />
         </BottomSheet>
       )}
+      {calledItMoment && (
+        <ICalledItCard moment={calledItMoment} onClose={() => setCalledItMoment(null)} />
+      )}
     </div>
   );
 }
@@ -962,6 +1068,7 @@ function BracketInner() {
 export default function BracketSimulator() {
   return (
     <BracketErrorBoundary>
+      <MyMoments />
       <BracketInner />
     </BracketErrorBoundary>
   );

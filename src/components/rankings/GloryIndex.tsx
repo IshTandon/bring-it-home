@@ -173,27 +173,26 @@ function buildRanking(
 }
 
 function getStatusChip(score: number, eliminated: boolean): { label: string; bg: string; text: string } {
-  if (eliminated) return { label: 'Eliminated', bg: 'bg-[#FEE2E2]', text: 'text-[#991B1B]' };
-  if (score >= 90) return { label: 'Favourite', bg: 'bg-[#1E40AF]', text: 'text-white' };
-  if (score >= 75) return { label: 'Contender', bg: 'bg-[#185FA5]', text: 'text-white' };
-  if (score >= 55) return { label: 'Dark horse', bg: 'bg-[#92400E]', text: 'text-white' };
-  if (score >= 35) return { label: 'Qualifier', bg: 'bg-[#6B7280]', text: 'text-white' };
-  return { label: 'Long shot', bg: 'bg-[#D1D5DB]', text: 'text-gray-800' };
+  if (eliminated) return { label: 'Eliminated', bg: 'bg-red-900/40', text: 'text-red-300' };
+  if (score >= 90) return { label: 'Favourite', bg: 'bg-dark-accent/20', text: 'text-dark-accent' };
+  if (score >= 75) return { label: 'Contender', bg: 'bg-blue-900/40', text: 'text-blue-300' };
+  if (score >= 55) return { label: 'Dark horse', bg: 'bg-amber-900/40', text: 'text-amber-300' };
+  if (score >= 35) return { label: 'Qualifier', bg: 'bg-dark-border', text: 'text-dark-text-muted' };
+  return { label: 'Long shot', bg: 'bg-dark-border/50', text: 'text-dark-text-muted' };
 }
 
 function scoreTextColor(score: number): string {
-  if (score >= 90) return 'text-[#1E40AF]';
-  if (score >= 75) return 'text-[#185FA5]';
-  if (score >= 55) return 'text-[#92400E]';
-  if (score >= 35) return 'text-[#6B7280]';
-  return 'text-gray-400';
+  if (score >= 90) return 'text-dark-accent';
+  if (score >= 75) return 'text-blue-400';
+  if (score >= 55) return 'text-amber-400';
+  if (score >= 35) return 'text-dark-text-muted';
+  return 'text-dark-text-muted/50';
 }
 
 function podiumBorder(rank: number): string {
-  if (rank === 1) return 'border-l-[3px] border-l-[#C9A840]';
-  if (rank === 2) return 'border-l-[3px] border-l-[#9CA3AF]';
-  if (rank === 3) return 'border-l-[3px] border-l-[#CD7F32]';
-  return 'border-l-[3px] border-l-transparent';
+  if (rank <= 3) return 'border-l-[3px] border-l-dark-accent';
+  if (rank <= 8) return 'border-l-[3px] border-l-gray-400';
+  return 'border-l-[3px] border-l-dark-border';
 }
 
 function MovementBadge({ movement, eliminated, eliminatedRound }: {
@@ -210,20 +209,20 @@ function MovementBadge({ movement, eliminated, eliminatedRound }: {
   }
   if (movement > 0) {
     return (
-      <span className="bg-green-50 text-green-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-green-200">
-        ↑{Math.abs(movement)}
+      <span className="bg-green-900/40 text-green-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-green-800/50">
+        ▲{Math.abs(movement)}
       </span>
     );
   }
   if (movement < 0) {
     return (
-      <span className="bg-red-50 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-red-200">
-        ↓{Math.abs(movement)}
+      <span className="bg-red-900/40 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-red-800/50">
+        ▼{Math.abs(movement)}
       </span>
     );
   }
   return (
-    <span className="bg-gray-50 text-gray-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-gray-200">
+    <span className="text-dark-text-muted/40 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
       —
     </span>
   );
@@ -317,28 +316,42 @@ export default function GloryIndex() {
 
   return (
     <div>
-      {/* Dynamic header */}
       <div className="mb-4">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">
           FIFA World Cup 2026 · Glory Index
         </p>
-        <h1 className="text-xl font-semibold text-gray-900">Glory Index</h1>
-        <span className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-dark-text-primary">Glory Index</h1>
+        <span className="text-sm text-dark-text-muted">
           {phaseLabel} · Updates after every match
         </span>
       </div>
 
-      {/* Collapsible info section */}
-      <div className="rounded-xl bg-blue-50 border border-blue-200 mb-4 overflow-hidden">
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-3 mb-4 text-[10px]">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-dark-accent" />
+          <span className="text-dark-text-muted">Favourite = ranked 1–8</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-400" />
+          <span className="text-dark-text-muted">Contender = 9–24</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-dark-border" />
+          <span className="text-dark-text-muted">Dark Horse = 25+</span>
+        </span>
+      </div>
+
+      <div className="rounded-xl bg-dark-accent/10 border border-dark-accent/30 mb-4 overflow-hidden">
         <button
           type="button"
           onClick={() => setInfoOpen(o => !o)}
           className="w-full flex items-center justify-between px-3 py-2.5 text-left"
         >
-          <span className="text-xs font-semibold text-blue-800">
+          <span className="text-xs font-semibold text-dark-accent">
             How is this calculated? ⓘ
           </span>
-          <span className={`text-blue-400 text-xs transition-transform duration-200 ${infoOpen ? 'rotate-180' : ''}`}>
+          <span className={`text-dark-accent text-xs transition-transform duration-200 ${infoOpen ? 'rotate-180' : ''}`}>
             ▼
           </span>
         </button>
@@ -346,7 +359,7 @@ export default function GloryIndex() {
           className="transition-all duration-300 ease-in-out overflow-hidden"
           style={{ maxHeight: infoOpen ? '300px' : '0px' }}
         >
-          <div className="px-3 pb-3 text-xs text-blue-800 leading-relaxed space-y-2">
+          <div className="px-3 pb-3 text-xs text-dark-text-primary leading-relaxed space-y-2">
             <p>
               The Glory Index measures each nation&apos;s likelihood of winning the tournament right now.
             </p>
@@ -364,15 +377,13 @@ export default function GloryIndex() {
         </div>
       </div>
 
-      {/* Rankings list */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">All 48 teams</h3>
-          <span className="text-[10px] text-gray-300 tabular-nums">{phaseLabel}</span>
+      <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">All 48 teams</h3>
+          <span className="text-[10px] text-dark-text-muted/50 tabular-nums">{phaseLabel}</span>
         </div>
 
-        {/* Active teams */}
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-dark-border/50">
           <AnimatePresence mode="popLayout">
             {activeRankings.map((entry, idx) => {
               const rank = idx + 1;
@@ -387,16 +398,16 @@ export default function GloryIndex() {
                 >
                   <Link
                     href={`/teams/${entry.id}`}
-                    className={`flex items-center gap-3 px-4 h-[52px] transition-colors hover:bg-gray-50 ${podiumBorder(rank)}
-                      ${rank <= 3 ? 'bg-amber-50/20' : ''}
+                    className={`flex items-center gap-3 px-4 h-[52px] transition-colors hover:bg-dark-border/30 ${podiumBorder(rank)}
+                      ${rank <= 8 ? 'bg-dark-accent/5' : ''}
                     `}
                     style={entry.flash ? { animation: 'gloryFlash 0.6s ease-out' } : undefined}
                   >
-                    <span className={`text-sm font-bold tabular-nums w-8 text-center shrink-0 ${rank <= 10 ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <span className={`text-sm font-bold tabular-nums w-8 text-center shrink-0 ${rank <= 10 ? 'text-dark-text-primary' : 'text-dark-text-muted'}`}>
                       {rank}
                     </span>
                     <span className="text-xl shrink-0 w-5 text-center">{entry.flag}</span>
-                    <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate">
+                    <span className="flex-1 min-w-0 text-sm font-medium text-dark-text-primary truncate">
                       {entry.name}
                     </span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${chip.bg} ${chip.text}`}>
@@ -413,13 +424,12 @@ export default function GloryIndex() {
           </AnimatePresence>
         </div>
 
-        {/* Eliminated divider + teams */}
         {eliminatedRankings.length > 0 && (
           <>
-            <div className="text-xs text-gray-400 uppercase tracking-widest py-2 px-4 border-t border-b border-gray-100">
+            <div className="text-xs text-dark-text-muted uppercase tracking-widest py-2 px-4 border-t border-b border-dark-border">
               Eliminated
             </div>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-dark-border/50">
               {eliminatedRankings.map(entry => {
                 const chip = getStatusChip(0, true);
                 return (
@@ -430,14 +440,14 @@ export default function GloryIndex() {
                   >
                     <span className="w-8 shrink-0" />
                     <span className="text-xl shrink-0 w-5 text-center">{entry.flag}</span>
-                    <span className="flex-1 min-w-0 text-sm font-medium text-gray-400 line-through truncate">
+                    <span className="flex-1 min-w-0 text-sm font-medium text-dark-text-muted line-through truncate">
                       {entry.name}
                     </span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${chip.bg} ${chip.text}`}>
                       {chip.label}
                     </span>
                     <MovementBadge movement={0} eliminated eliminatedRound={entry.eliminatedRound} />
-                    <span className="text-sm font-semibold tabular-nums w-12 text-right shrink-0 text-gray-300">
+                    <span className="text-sm font-semibold tabular-nums w-12 text-right shrink-0 text-dark-text-muted/50">
                       —
                     </span>
                   </Link>
@@ -448,10 +458,9 @@ export default function GloryIndex() {
         )}
       </div>
 
-      {/* Flash animation keyframes */}
       <style jsx global>{`
         @keyframes gloryFlash {
-          0% { background-color: #FEF9C3; }
+          0% { background-color: rgba(245, 158, 11, 0.2); }
           100% { background-color: transparent; }
         }
       `}</style>

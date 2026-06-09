@@ -5,9 +5,9 @@ interface FormResult {
 }
 
 const CHIP_STYLES: Record<'W' | 'D' | 'L', string> = {
-  W: 'bg-[#eaf3de] text-[#27500a]',
-  D: 'bg-gray-100 text-gray-500',
-  L: 'bg-[#fcebeb] text-[#a32d2d]',
+  W: 'bg-green-900/40 text-green-300',
+  D: 'bg-dark-border text-dark-text-muted',
+  L: 'bg-red-900/40 text-red-300',
 };
 
 export default function FormStrip({ results }: { results: FormResult[] }) {

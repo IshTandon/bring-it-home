@@ -21,13 +21,13 @@ const POS_GROUPS: { label: string; positions: string[] }[] = [
 
 function PlayerCardSkeleton() {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4 flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full skeleton" />
       <div className="flex-1 space-y-1.5">
-        <div className="h-3.5 w-32 bg-gray-200 animate-pulse rounded" />
-        <div className="h-2.5 w-20 bg-gray-200 animate-pulse rounded" />
+        <div className="h-3.5 w-32 skeleton rounded" />
+        <div className="h-2.5 w-20 skeleton rounded" />
       </div>
-      <div className="w-8 h-4 bg-gray-200 animate-pulse rounded" />
+      <div className="w-8 h-4 skeleton rounded" />
     </div>
   );
 }
@@ -140,19 +140,19 @@ export default function PlayerGrid() {
   return (
     <div>
       <div className="mb-4">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">Scouting report</p>
-        <h1 className="text-xl font-semibold text-gray-900">Player Cards</h1>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Scouting report</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">Player Cards</h1>
+        <p className="text-xs text-dark-text-muted mt-0.5">
           {PLAYERS.length} players across {new Set(PLAYERS.map(p => p.teamId)).size} nations. Tap to expand.
         </p>
       </div>
 
       {compareCount > 0 && compareCount < 2 && (
-        <div className="mb-3 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
-          <p className="text-xs text-blue-700">
+        <div className="mb-3 px-3 py-2 rounded-xl bg-dark-accent/10 border border-dark-accent/30 flex items-center justify-between">
+          <p className="text-xs text-dark-accent">
             <span className="font-semibold">{compared[0]?.name}</span> selected. Pick one more to compare.
           </p>
-          <button type="button" onClick={handleClearCompare} className="text-[10px] text-blue-500 font-medium">
+          <button type="button" onClick={handleClearCompare} className="text-[10px] text-dark-accent font-medium">
             Cancel
           </button>
         </div>
@@ -165,7 +165,7 @@ export default function PlayerGrid() {
       )}
 
       <div className="relative mb-3">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
         <input
@@ -173,7 +173,7 @@ export default function PlayerGrid() {
           placeholder="Search by name, team, or nationality..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); if (e.target.value) setActiveGroup('All'); }}
-          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+          className="w-full pl-9 pr-4 py-2.5 text-sm border border-dark-border rounded-xl bg-dark-surface text-dark-text-primary placeholder:text-dark-text-muted focus:outline-none focus:ring-2 focus:ring-dark-accent/30 focus:border-dark-accent/50 transition-all"
         />
       </div>
 
@@ -185,8 +185,8 @@ export default function PlayerGrid() {
             onClick={() => setActiveGroup(group.label)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95
               ${activeGroup === group.label
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-500 border border-gray-200'}
+                ? 'bg-dark-accent text-dark-bg'
+                : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
             `}
           >
             {group.label}
@@ -195,14 +195,14 @@ export default function PlayerGrid() {
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-dark-text-muted">
           {filtered.length} player{filtered.length !== 1 ? 's' : ''}
         </p>
         {(search || activeGroup !== 'All') && (
           <button
             type="button"
             onClick={handleClear}
-            className="text-xs text-blue-500 font-medium active:text-blue-700"
+            className="text-xs text-dark-accent font-medium active:text-amber-400"
           >
             Clear filters
           </button>
@@ -211,8 +211,13 @@ export default function PlayerGrid() {
 
       {filtered.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400 text-sm">No players match your search.</p>
-          <button type="button" onClick={handleClear} className="text-sm text-blue-500 mt-2 font-medium">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center">
+            <svg className="w-8 h-8 text-dark-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+            </svg>
+          </div>
+          <p className="text-dark-text-muted text-sm mb-2">No players match your search.</p>
+          <button type="button" onClick={handleClear} className="text-sm text-dark-accent font-medium">
             Reset filters
           </button>
         </div>

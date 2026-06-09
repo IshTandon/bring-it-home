@@ -14,7 +14,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { valu
   return (
     <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg">
       <p className="font-bold tabular-nums">#{d.rank}</p>
-      <p className="text-gray-300 tabular-nums">{d.year}</p>
+      <p className="text-dark-text-muted/50 tabular-nums">{d.year}</p>
     </div>
   );
 }
@@ -29,13 +29,13 @@ export default function RankingChart({ history, currentRank }: { history: Rankin
   const maxRank = useMemo(() => Math.max(...history.map(p => p.rank), 50), [history]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">FIFA Ranking History</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">FIFA Ranking History</h3>
 
       <div className="text-center mb-3">
-        <p className="text-4xl font-bold text-gray-900 tabular-nums">#{currentRank}</p>
-        <p className="text-[11px] text-gray-400 mt-0.5">Current FIFA Ranking</p>
-        <p className="text-[11px] text-[#185FA5] font-medium mt-0.5 tabular-nums">
+        <p className="text-4xl font-bold text-dark-text-primary tabular-nums">#{currentRank}</p>
+        <p className="text-[11px] text-dark-text-muted mt-0.5">Current FIFA Ranking</p>
+        <p className="text-[11px] text-dark-accent font-medium mt-0.5 tabular-nums">
           Best: #{best.rank} ({best.year})
         </p>
       </div>

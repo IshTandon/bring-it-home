@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { TIMELINE_DAYS, TEAMS } from '@/lib/data';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import type { TimelineDay } from '@/types';
 
 const TOURNAMENT_START = new Date('2026-06-12T00:00:00');
@@ -17,7 +18,7 @@ function TeamLink({ name, flag, className }: { name: string; flag?: string; clas
   const id = teamIdByName(name);
   const content = flag ? <><span>{flag}</span> {name}</> : name;
   if (!id) return <span className={className}>{content}</span>;
-  return <Link href={`/teams/${id}`} className={`${className} hover:text-[#185FA5] transition-colors`}>{content}</Link>;
+  return <Link href={`/teams/${id}`} className={`${className} hover:text-dark-accent transition-colors`}>{content}</Link>;
 }
 
 function DummyDataBanner() {
@@ -36,13 +37,13 @@ function DummyDataBanner() {
   };
 
   return (
-    <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-[#FEF3C7] border border-[#F59E0B] mb-4">
+    <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-amber-900/20 border border-dark-accent/50 mb-4">
       <span className="shrink-0 text-sm leading-none mt-0.5">⚠</span>
-      <p className="flex-1 text-xs text-amber-900 font-medium leading-relaxed">
+      <p className="flex-1 text-xs text-dark-accent font-medium leading-relaxed">
         Preview mode — showing illustrative data. Live content updates from June 12, 2026.
       </p>
       <button type="button" onClick={handleDismiss}
-        className="shrink-0 text-amber-700 hover:text-amber-900 transition-colors ml-1"
+        className="shrink-0 text-dark-accent hover:text-amber-300 transition-colors ml-1"
         aria-label="Dismiss banner">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -60,12 +61,12 @@ function FutureDayOverlay({ day }: { day: TimelineDay }) {
 
   return (
     <div className="absolute inset-0 z-10 rounded-xl flex items-center justify-center"
-      style={{ backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', background: 'rgba(255,255,255,0.15)' }}>
-      <div className="bg-white rounded-full shadow-sm px-3 py-1.5 flex flex-col items-center gap-0.5">
-        <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+      style={{ backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)', background: 'rgba(10,14,26,0.4)' }}>
+      <div className="bg-dark-surface border border-dark-border rounded-full shadow-sm px-3 py-1.5 flex flex-col items-center gap-0.5">
+        <span className="text-xs font-semibold text-dark-text-primary flex items-center gap-1">
           🔒 {label}
         </span>
-        <span className="text-[10px] text-gray-400">Dummy data — for illustration only</span>
+        <span className="text-[10px] text-dark-text-muted">Dummy data — for illustration only</span>
       </div>
     </div>
   );
@@ -118,14 +119,14 @@ function DayRail({
             onClick={() => !isFuture && onSelect(d.id)}
             className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap
               ${isFuture
-                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                ? 'bg-dark-border/50 text-dark-text-muted/50 cursor-not-allowed'
                 : isActive
                   ? isUpset
-                    ? 'bg-red-600 text-white ring-2 ring-red-200'
-                    : 'bg-gray-900 text-white ring-2 ring-gray-300'
+                    ? 'bg-red-600 text-white ring-2 ring-red-400/30'
+                    : 'bg-dark-accent text-dark-bg ring-2 ring-dark-accent/30'
                   : isUpset
-                    ? 'bg-red-50 text-red-700 border border-red-200'
-                    : 'bg-white text-gray-600 border border-gray-200'}
+                    ? 'bg-red-900/30 text-red-400 border border-red-800/50'
+                    : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
             `}
           >
             {d.label}
@@ -140,17 +141,17 @@ function DayRail({
 
 function ChapterBanner({ day }: { day: TimelineDay }) {
   return (
-    <div className={`rounded-xl p-5 ${day.upset ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
+    <div className={`rounded-xl p-5 ${day.upset ? 'bg-red-900/20 border border-red-800/50' : 'bg-dark-accent/10 border border-dark-accent/30'}`}>
       <div className="flex items-center gap-2 mb-2">
-        <span className={`text-[10px] font-bold uppercase tracking-widest ${day.upset ? 'text-red-500' : 'text-blue-500'}`}>
+        <span className={`text-[10px] font-bold uppercase tracking-widest ${day.upset ? 'text-red-400' : 'text-dark-accent'}`}>
           {day.tag}
         </span>
-        <span className="text-[10px] text-gray-400">{day.date}</span>
+        <span className="text-[10px] text-dark-text-muted">{day.date}</span>
       </div>
-      <h2 className={`text-lg font-bold leading-snug ${day.upset ? 'text-red-900' : 'text-gray-900'}`}>
+      <h2 className={`text-lg font-bold leading-snug ${day.upset ? 'text-red-300' : 'text-dark-text-primary'}`}>
         {day.headline}
       </h2>
-      <p className="text-sm text-gray-600 leading-relaxed mt-3">
+      <p className="text-sm text-dark-text-muted leading-relaxed mt-3">
         {day.narrative}
       </p>
     </div>
@@ -159,31 +160,31 @@ function ChapterBanner({ day }: { day: TimelineDay }) {
 
 function MatchResults({ day }: { day: TimelineDay }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Match Results</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-dark-border bg-dark-border/30">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Match Results</h3>
       </div>
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-dark-border/50">
         {day.matches.map((m, i) => (
           <div key={i} className="px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <TeamLink name={m.homeTeam} flag={m.homeFlag} className="flex items-center gap-2 text-sm font-semibold text-gray-900 truncate" />
+                <TeamLink name={m.homeTeam} flag={m.homeFlag} className="flex items-center gap-2 text-sm font-semibold text-dark-text-primary truncate" />
               </div>
               <div className="flex items-center gap-2 px-3 shrink-0">
-                <span className={`text-lg font-bold tabular-nums ${!day.future ? (m.homeScore > m.awayScore ? 'text-green-700' : m.homeScore < m.awayScore ? 'text-red-600' : 'text-gray-700') : 'text-gray-300'}`}>
+                <span className={`text-lg font-bold tabular-nums ${!day.future ? (m.homeScore > m.awayScore ? 'text-green-400' : m.homeScore < m.awayScore ? 'text-red-400' : 'text-dark-text-primary') : 'text-dark-text-muted/30'}`}>
                   {day.future ? '-' : m.homeScore}
                 </span>
-                <span className="text-gray-300 text-sm">:</span>
-                <span className={`text-lg font-bold tabular-nums ${!day.future ? (m.awayScore > m.homeScore ? 'text-green-700' : m.awayScore < m.homeScore ? 'text-red-600' : 'text-gray-700') : 'text-gray-300'}`}>
+                <span className="text-dark-text-muted text-sm">:</span>
+                <span className={`text-lg font-bold tabular-nums ${!day.future ? (m.awayScore > m.homeScore ? 'text-green-400' : m.awayScore < m.homeScore ? 'text-red-400' : 'text-dark-text-primary') : 'text-dark-text-muted/30'}`}>
                   {day.future ? '-' : m.awayScore}
                 </span>
               </div>
               <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                <TeamLink name={m.awayTeam} flag={m.awayFlag} className="flex items-center gap-2 text-sm font-semibold text-gray-900 truncate text-right" />
+                <TeamLink name={m.awayTeam} flag={m.awayFlag} className="flex items-center gap-2 text-sm font-semibold text-dark-text-primary truncate text-right" />
               </div>
             </div>
-            <p className="text-[11px] text-gray-400 mt-1 text-center italic">{m.note}</p>
+            <p className="text-[11px] text-dark-text-muted mt-1 text-center italic">{m.note}</p>
           </div>
         ))}
       </div>
@@ -195,16 +196,16 @@ function PlayerOfDayCard({ day }: { day: TimelineDay }) {
   if (!day.playerOfDay || day.future) return null;
   const p = day.playerOfDay;
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Player of the Day</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">Player of the Day</h3>
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-amber-50 border-2 border-amber-300 flex items-center justify-center text-2xl shrink-0">
+        <div className="w-12 h-12 rounded-full bg-dark-accent/10 border-2 border-dark-accent/50 flex items-center justify-center text-2xl shrink-0">
           {p.flag}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900">{p.name}</p>
-          <TeamLink name={p.team} flag={p.flag} className="text-[11px] text-gray-500" />
-          <p className="text-xs font-semibold text-amber-700 mt-0.5">{p.stat}</p>
+          <p className="text-sm font-bold text-dark-text-primary">{p.name}</p>
+          <TeamLink name={p.team} flag={p.flag} className="text-[11px] text-dark-text-muted" />
+          <p className="text-xs font-semibold text-dark-accent mt-0.5">{p.stat}</p>
         </div>
         <div className="text-2xl">⭐</div>
       </div>
@@ -215,8 +216,8 @@ function PlayerOfDayCard({ day }: { day: TimelineDay }) {
 function TournamentContext({ day }: { day: TimelineDay }) {
   const s = day.stats;
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Tournament So Far</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">Tournament So Far</h3>
       <div className="grid grid-cols-4 gap-2">
         {[
           { label: 'Goals', value: s.goals, emoji: '⚽' },
@@ -226,8 +227,8 @@ function TournamentContext({ day }: { day: TimelineDay }) {
         ].map((stat) => (
           <div key={stat.label} className="text-center">
             <div className="text-xl mb-1">{stat.emoji}</div>
-            <div className="text-lg font-bold text-gray-900 tabular-nums">{stat.value}</div>
-            <div className="text-[10px] text-gray-400 font-medium">{stat.label}</div>
+            <div className="text-lg font-bold text-dark-text-primary tabular-nums">{stat.value}</div>
+            <div className="text-[10px] text-dark-text-muted font-medium">{stat.label}</div>
           </div>
         ))}
       </div>
@@ -237,16 +238,16 @@ function TournamentContext({ day }: { day: TimelineDay }) {
 
 function CommunityMood({ day }: { day: TimelineDay }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Community Mood</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">Community Mood</h3>
       <div className="space-y-3">
         {day.mood.map((m) => (
           <div key={m.team}>
             <div className="flex items-center justify-between mb-1">
-              <TeamLink name={m.team} flag={m.flag} className="text-xs font-semibold text-gray-700" />
-              <span className="text-[10px] text-gray-400 tabular-nums">{m.positive}% positive</span>
+              <TeamLink name={m.team} flag={m.flag} className="text-xs font-semibold text-dark-text-primary" />
+              <span className="text-[10px] text-dark-text-muted tabular-nums">{m.positive}% positive</span>
             </div>
-            <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden flex">
+            <div className="h-2.5 rounded-full bg-dark-border overflow-hidden flex">
               <div
                 className="h-full rounded-l-full transition-all duration-500"
                 style={{
@@ -255,7 +256,7 @@ function CommunityMood({ day }: { day: TimelineDay }) {
                 }}
               />
               <div
-                className="h-full rounded-r-full bg-red-200 transition-all duration-500"
+                className="h-full rounded-r-full bg-red-900/50 transition-all duration-500"
                 style={{ width: `${m.negative}%` }}
               />
             </div>
@@ -295,8 +296,8 @@ function EmojiVote({ day }: { day: TimelineDay }) {
   }, [voted, day.id, day.future]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">
         {day.future ? 'Voting opens after matches' : voted ? 'You voted!' : 'How was today?'}
       </h3>
       <div className="grid grid-cols-4 gap-2">
@@ -311,16 +312,16 @@ function EmojiVote({ day }: { day: TimelineDay }) {
               onClick={() => handleVote(opt.emoji)}
               className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all active:scale-95
                 ${voted && localCount > 0
-                  ? 'bg-blue-50 border-2 border-blue-300'
+                  ? 'bg-dark-accent/10 border-2 border-dark-accent/50'
                   : day.future
-                    ? 'bg-gray-50 border border-gray-100 opacity-50'
-                    : 'bg-gray-50 border border-gray-200 hover:border-gray-300'}
+                    ? 'bg-dark-border/30 border border-dark-border opacity-50'
+                    : 'bg-dark-border/30 border border-dark-border hover:border-dark-text-muted'}
               `}
             >
               <span className="text-2xl">{opt.emoji}</span>
-              <span className="text-[10px] font-medium text-gray-500">{opt.label}</span>
+              <span className="text-[10px] font-medium text-dark-text-muted">{opt.label}</span>
               {!day.future && (
-                <span className="text-[10px] font-bold text-gray-400 tabular-nums">{totalCount.toLocaleString()}</span>
+                <span className="text-[10px] font-bold text-dark-text-muted tabular-nums">{totalCount.toLocaleString()}</span>
               )}
             </button>
           );
@@ -337,17 +338,17 @@ function StreakBar({ day }: { day: TimelineDay }) {
   const progress = ((idx + 1) / TIMELINE_DAYS.length) * 100;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Tournament Progress</h3>
-      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-2">Tournament Progress</h3>
+      <div className="h-3 bg-dark-border rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-dark-accent to-green-500 transition-all duration-700"
           style={{ width: `${progress}%` }}
         />
       </div>
       <div className="flex justify-between mt-1.5">
-        <span className="text-[10px] text-gray-400 font-medium">Day {idx + 1} of {TIMELINE_DAYS.length}</span>
-        <span className="text-[10px] text-gray-400 font-medium">{Math.round(progress)}% complete</span>
+        <span className="text-[10px] text-dark-text-muted font-medium">Day {idx + 1} of {TIMELINE_DAYS.length}</span>
+        <span className="text-[10px] text-dark-text-muted font-medium">{Math.round(progress)}% complete</span>
       </div>
     </div>
   );
@@ -357,6 +358,7 @@ export default function TournamentTimeline() {
   const firstPlayable = TIMELINE_DAYS.find(d => !d.future) || TIMELINE_DAYS[0];
   const lastPlayable = [...TIMELINE_DAYS].reverse().find(d => !d.future) || firstPlayable;
   const [activeId, setActiveId] = useState(lastPlayable.id);
+  const { containerRef, getRevealProps } = useScrollReveal<HTMLDivElement>({ staggerDelay: 80 });
 
   const day = TIMELINE_DAYS.find(d => d.id === activeId) || TIMELINE_DAYS[0];
   const dayIndex = TIMELINE_DAYS.findIndex(d => d.id === activeId);
@@ -376,38 +378,33 @@ export default function TournamentTimeline() {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-4">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">The story so far</p>
-        <h1 className="text-xl font-semibold text-gray-900">Tournament Timeline</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Every day is a chapter. Tap through the story of the World Cup.</p>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">The story so far</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">Tournament Timeline</h1>
+        <p className="text-xs text-dark-text-muted mt-0.5">Every day is a chapter. Tap through the story of the World Cup.</p>
       </div>
 
       <DummyDataBanner />
-
-      {/* Day rail */}
       <DayRail days={TIMELINE_DAYS} activeId={activeId} onSelect={setActiveId} />
 
-      {/* Day content */}
-      <div className="mt-4 space-y-3 relative">
+      <div ref={containerRef} className="mt-4 space-y-3 relative">
         <FutureDayOverlay day={day} />
-        <ChapterBanner day={day} />
-        <MatchResults day={day} />
-        <PlayerOfDayCard day={day} />
-        <TournamentContext day={day} />
-        <CommunityMood day={day} />
-        <EmojiVote day={day} />
-        <StreakBar day={day} />
+        <div {...getRevealProps(0)}><ChapterBanner day={day} /></div>
+        <div {...getRevealProps(1)}><MatchResults day={day} /></div>
+        <div {...getRevealProps(2)}><PlayerOfDayCard day={day} /></div>
+        <div {...getRevealProps(3)}><TournamentContext day={day} /></div>
+        <div {...getRevealProps(4)}><CommunityMood day={day} /></div>
+        <div {...getRevealProps(5)}><EmojiVote day={day} /></div>
+        <div {...getRevealProps(6)}><StreakBar day={day} /></div>
       </div>
 
-      {/* Prev / Next + Share */}
       <div className="flex items-center gap-3 mt-4 pb-2">
         <button
           type="button"
           disabled={!hasPrev}
           onClick={() => hasPrev && setActiveId(TIMELINE_DAYS[dayIndex - 1].id)}
           className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95
-            ${hasPrev ? 'bg-gray-100 text-gray-700' : 'bg-gray-50 text-gray-300 cursor-not-allowed'}
+            ${hasPrev ? 'bg-dark-surface border border-dark-border text-dark-text-primary' : 'bg-dark-border/30 text-dark-text-muted/50 cursor-not-allowed'}
           `}
         >
           ← Prev
@@ -417,7 +414,7 @@ export default function TournamentTimeline() {
           <button
             type="button"
             onClick={handleShare}
-            className="px-4 py-3 rounded-xl text-sm font-semibold bg-blue-600 text-white transition-all active:scale-95 shrink-0"
+            className="px-4 py-3 rounded-xl text-sm font-semibold bg-dark-accent text-dark-bg transition-all active:scale-95 shrink-0"
           >
             Share today&apos;s story
           </button>
@@ -428,7 +425,7 @@ export default function TournamentTimeline() {
           disabled={!hasNext}
           onClick={() => hasNext && setActiveId(TIMELINE_DAYS[dayIndex + 1].id)}
           className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95
-            ${hasNext ? 'bg-gray-100 text-gray-700' : 'bg-gray-50 text-gray-300 cursor-not-allowed'}
+            ${hasNext ? 'bg-dark-surface border border-dark-border text-dark-text-primary' : 'bg-dark-border/30 text-dark-text-muted/50 cursor-not-allowed'}
           `}
         >
           Next →

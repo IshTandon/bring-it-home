@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { TOURNAMENT_HISTORY } from '@/lib/data';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import type { TournamentHistoryEntry, TournamentHistoryTeam } from '@/lib/data';
 
 type SortKey = 'goals' | 'assists' | 'rating';
@@ -11,27 +12,27 @@ const YEARS = ['All-time', '2022', '2018', '2014', '2010', '2006', '2002'] as co
 
 function WinnerCard({ entry }: { entry: TournamentHistoryEntry }) {
   return (
-    <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border border-amber-200 rounded-xl p-5">
+    <div className="bg-gradient-to-r from-amber-900/30 via-dark-accent/10 to-amber-900/30 border border-dark-accent/30 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-dark-accent">
           {entry.year} World Cup
         </span>
-        <span className="text-[10px] text-gray-400">{entry.hostFlag} {entry.host}</span>
+        <span className="text-[10px] text-dark-text-muted">{entry.hostFlag} {entry.host}</span>
       </div>
       <div className="flex items-center justify-between gap-4">
         <Link href={`/teams/${entry.winner.id}`} className="flex flex-col items-center gap-1 flex-1">
           <span className="text-4xl">{entry.winner.flag}</span>
-          <span className="text-sm font-bold text-gray-900">{entry.winner.name}</span>
-          <span className="text-[10px] text-amber-600 font-bold uppercase">Champion</span>
+          <span className="text-sm font-bold text-dark-text-primary">{entry.winner.name}</span>
+          <span className="text-[10px] text-dark-accent font-bold uppercase">Champion</span>
         </Link>
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <span className="text-lg font-bold text-gray-900 tabular-nums">{entry.finalScore}</span>
-          <span className="text-[10px] text-gray-400 font-medium">Final</span>
+          <span className="text-lg font-bold text-dark-text-primary tabular-nums">{entry.finalScore}</span>
+          <span className="text-[10px] text-dark-text-muted font-medium">Final</span>
         </div>
         <Link href={`/teams/${entry.runnerUp.id}`} className="flex flex-col items-center gap-1 flex-1">
           <span className="text-4xl">{entry.runnerUp.flag}</span>
-          <span className="text-sm font-bold text-gray-900">{entry.runnerUp.name}</span>
-          <span className="text-[10px] text-gray-400 font-medium uppercase">Runner-up</span>
+          <span className="text-sm font-bold text-dark-text-primary">{entry.runnerUp.name}</span>
+          <span className="text-[10px] text-dark-text-muted font-medium uppercase">Runner-up</span>
         </Link>
       </div>
     </div>
@@ -47,36 +48,36 @@ function TopPlayersTable({ entry, sortKey, onSortChange }: {
   );
 
   function badgeColor(key: SortKey): string {
-    if (key === 'goals') return 'bg-[#185FA5] text-white';
-    if (key === 'assists') return 'bg-[#3B6D11] text-white';
-    return 'bg-[#854F0B] text-white';
+    if (key === 'goals') return 'bg-blue-600 text-white';
+    if (key === 'assists') return 'bg-green-700 text-white';
+    return 'bg-amber-700 text-white';
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Top Players</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+      <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border flex items-center justify-between">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Top Players</h3>
         <div className="flex gap-1">
           {(['goals', 'assists', 'rating'] as const).map(k => (
             <button key={k} type="button" onClick={() => onSortChange(k)}
               className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all
-                ${k === sortKey ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}
+                ${k === sortKey ? 'bg-dark-accent text-dark-bg' : 'text-dark-text-muted hover:text-dark-text-primary'}
               `}>
               {k === 'goals' ? 'Goals' : k === 'assists' ? 'Assists' : 'Rating'}
             </button>
           ))}
         </div>
       </div>
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-dark-border/50">
         {sorted.map((p, idx) => (
           <div key={p.name} className="flex items-center gap-3 px-4 py-3">
-            <span className="text-sm font-bold text-gray-300 tabular-nums w-5 text-center shrink-0">{idx + 1}</span>
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+            <span className="text-sm font-bold text-dark-text-muted tabular-nums w-5 text-center shrink-0">{idx + 1}</span>
+            <div className="w-8 h-8 rounded-full bg-dark-border flex items-center justify-center shrink-0">
               <span className="text-lg">{p.flag}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
-              <p className="text-[11px] text-gray-400">{p.flag} {p.team}</p>
+              <p className="text-sm font-medium text-dark-text-primary truncate">{p.name}</p>
+              <p className="text-[11px] text-dark-text-muted">{p.flag} {p.team}</p>
             </div>
             <span className={`text-xs font-bold px-2 py-1 rounded-md tabular-nums ${badgeColor(sortKey)}`}>
               {sortKey === 'rating' ? p[sortKey].toFixed(1) : p[sortKey]}
@@ -89,9 +90,9 @@ function TopPlayersTable({ entry, sortKey, onSortChange }: {
 }
 
 function statWinClass(a: number, b: number): [string, string] {
-  if (a > b) return ['bg-[#185FA5]/10 text-[#185FA5] font-bold', 'text-gray-500'];
-  if (b > a) return ['text-gray-500', 'bg-[#185FA5]/10 text-[#185FA5] font-bold'];
-  return ['text-gray-700', 'text-gray-700'];
+  if (a > b) return ['bg-dark-accent/10 text-dark-accent font-bold', 'text-dark-text-muted'];
+  if (b > a) return ['text-dark-text-muted', 'bg-dark-accent/10 text-dark-accent font-bold'];
+  return ['text-dark-text-primary', 'text-dark-text-primary'];
 }
 
 function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
@@ -112,19 +113,19 @@ function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
   }, [teamA, teamB]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-      <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Compare</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+      <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Compare</h3>
       </div>
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <select value={teamAId} onChange={e => setTeamAId(e.target.value)}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300">
+            className="w-full text-sm border border-dark-border rounded-lg px-3 py-2 bg-dark-bg text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-dark-accent/30 focus:border-dark-accent/50">
             <option value="">Select team</option>
             {teams.map(t => <option key={t.id} value={t.id}>{t.flag} {t.name}</option>)}
           </select>
           <select value={teamBId} onChange={e => setTeamBId(e.target.value)}
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300">
+            className="w-full text-sm border border-dark-border rounded-lg px-3 py-2 bg-dark-bg text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-dark-accent/30 focus:border-dark-accent/50">
             <option value="">Select team</option>
             {teams.map(t => <option key={t.id} value={t.id}>{t.flag} {t.name}</option>)}
           </select>
@@ -132,13 +133,12 @@ function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
 
         {teamA && teamB && stats && (
           <div className="space-y-2">
-            {/* Team headers */}
             <div className="grid grid-cols-3 gap-2 text-center mb-2">
-              <Link href={`/teams/${teamA.id}`} className="text-sm font-semibold text-gray-900 truncate hover:text-[#185FA5] transition-colors">
+              <Link href={`/teams/${teamA.id}`} className="text-sm font-semibold text-dark-text-primary truncate hover:text-dark-accent transition-colors">
                 {teamA.flag} {teamA.name}
               </Link>
-              <span className="text-[10px] text-gray-400 font-medium self-center">VS</span>
-              <Link href={`/teams/${teamB.id}`} className="text-sm font-semibold text-gray-900 truncate hover:text-[#185FA5] transition-colors">
+              <span className="text-[10px] text-dark-text-muted font-medium self-center">VS</span>
+              <Link href={`/teams/${teamB.id}`} className="text-sm font-semibold text-dark-text-primary truncate hover:text-dark-accent transition-colors">
                 {teamB.flag} {teamB.name}
               </Link>
             </div>
@@ -149,7 +149,7 @@ function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
               return (
                 <div key={s.label} className="grid grid-cols-3 gap-2 items-center">
                   <div className={`text-center py-1.5 px-2 rounded-lg text-sm tabular-nums ${clsA}`}>{s.a}</div>
-                  <div className="text-center text-[10px] text-gray-400 font-medium">{s.label}</div>
+                  <div className="text-center text-[10px] text-dark-text-muted font-medium">{s.label}</div>
                   <div className={`text-center py-1.5 px-2 rounded-lg text-sm tabular-nums ${clsB}`}>{s.b}</div>
                 </div>
               );
@@ -158,7 +158,14 @@ function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
         )}
 
         {(!teamA || !teamB) && (
-          <p className="text-xs text-gray-400 text-center py-4">Select two teams to compare their tournament stats.</p>
+          <div className="text-center py-8">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-dark-border flex items-center justify-center">
+              <svg className="w-6 h-6 text-dark-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </div>
+            <p className="text-xs text-dark-text-muted">Select two teams to compare their tournament stats.</p>
+          </div>
         )}
       </div>
     </div>
@@ -167,18 +174,20 @@ function CompareSection({ teams }: { teams: TournamentHistoryTeam[] }) {
 
 function YearContent({ entry }: { entry: TournamentHistoryEntry }) {
   const [sortKey, setSortKey] = useState<SortKey>('goals');
+  const { containerRef, getRevealProps } = useScrollReveal<HTMLDivElement>({ staggerDelay: 100 });
 
   return (
-    <div className="space-y-3">
-      <WinnerCard entry={entry} />
-      <TopPlayersTable entry={entry} sortKey={sortKey} onSortChange={setSortKey} />
-      <CompareSection teams={entry.topTeams} />
+    <div ref={containerRef} className="space-y-3">
+      <div {...getRevealProps(0)}><WinnerCard entry={entry} /></div>
+      <div {...getRevealProps(1)}><TopPlayersTable entry={entry} sortKey={sortKey} onSortChange={setSortKey} /></div>
+      <div {...getRevealProps(2)}><CompareSection teams={entry.topTeams} /></div>
     </div>
   );
 }
 
 function AllTimeContent() {
   const [sortKey, setSortKey] = useState<SortKey>('goals');
+  const { containerRef, getRevealProps } = useScrollReveal<HTMLDivElement>({ staggerDelay: 100 });
 
   const allPlayers = useMemo(() => {
     const map: Record<string, { name: string; flag: string; team: string; goals: number; assists: number; rating: number; appearances: number }> = {};
@@ -201,58 +210,56 @@ function AllTimeContent() {
   }, [sortKey]);
 
   function badgeColor(key: SortKey): string {
-    if (key === 'goals') return 'bg-[#185FA5] text-white';
-    if (key === 'assists') return 'bg-[#3B6D11] text-white';
-    return 'bg-[#854F0B] text-white';
+    if (key === 'goals') return 'bg-blue-600 text-white';
+    if (key === 'assists') return 'bg-green-700 text-white';
+    return 'bg-amber-700 text-white';
   }
 
   return (
-    <div className="space-y-3">
-      {/* Winners timeline */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Champions Roll</h3>
+    <div ref={containerRef} className="space-y-3">
+      <div {...getRevealProps(0)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Champions Roll</h3>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-dark-border/50">
           {TOURNAMENT_HISTORY.map(entry => (
             <div key={entry.year} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-sm font-bold text-gray-400 tabular-nums w-10 shrink-0">{entry.year}</span>
+              <span className="text-sm font-bold text-dark-text-muted tabular-nums w-10 shrink-0">{entry.year}</span>
               <Link href={`/teams/${entry.winner.id}`} className="text-lg shrink-0">{entry.winner.flag}</Link>
-              <Link href={`/teams/${entry.winner.id}`} className="flex-1 text-sm font-medium text-gray-900 truncate hover:text-[#185FA5] transition-colors">
+              <Link href={`/teams/${entry.winner.id}`} className="flex-1 text-sm font-medium text-dark-text-primary truncate hover:text-dark-accent transition-colors">
                 {entry.winner.name}
               </Link>
-              <span className="text-xs text-gray-400 tabular-nums shrink-0">{entry.finalScore}</span>
+              <span className="text-xs text-dark-text-muted tabular-nums shrink-0">{entry.finalScore}</span>
               <Link href={`/teams/${entry.runnerUp.id}`} className="text-lg shrink-0">{entry.runnerUp.flag}</Link>
             </div>
           ))}
         </div>
       </div>
 
-      {/* All-time top players */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">All-Time Top Players</h3>
+      <div {...getRevealProps(1)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border flex items-center justify-between">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">All-Time Top Players</h3>
           <div className="flex gap-1">
             {(['goals', 'assists', 'rating'] as const).map(k => (
               <button key={k} type="button" onClick={() => setSortKey(k)}
                 className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all
-                  ${k === sortKey ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600'}
+                  ${k === sortKey ? 'bg-dark-accent text-dark-bg' : 'text-dark-text-muted hover:text-dark-text-primary'}
                 `}>
                 {k === 'goals' ? 'Goals' : k === 'assists' ? 'Assists' : 'Rating'}
               </button>
             ))}
           </div>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-dark-border/50">
           {allPlayers.map((p, idx) => (
             <div key={p.name} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-sm font-bold text-gray-300 tabular-nums w-5 text-center shrink-0">{idx + 1}</span>
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-dark-text-muted tabular-nums w-5 text-center shrink-0">{idx + 1}</span>
+              <div className="w-8 h-8 rounded-full bg-dark-border flex items-center justify-center shrink-0">
                 <span className="text-lg">{p.flag}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
-                <p className="text-[11px] text-gray-400">{p.flag} {p.team}</p>
+                <p className="text-sm font-medium text-dark-text-primary truncate">{p.name}</p>
+                <p className="text-[11px] text-dark-text-muted">{p.flag} {p.team}</p>
               </div>
               <span className={`text-xs font-bold px-2 py-1 rounded-md tabular-nums ${badgeColor(sortKey)}`}>
                 {sortKey === 'rating' ? p[sortKey].toFixed(1) : p[sortKey]}
@@ -275,17 +282,16 @@ export default function HistoricalData() {
   return (
     <div>
       <div className="mb-4">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">The record books</p>
-        <h1 className="text-xl font-semibold text-gray-900">World Cup History</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Champions, legends, and numbers that shaped the game.</p>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">The record books</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">World Cup History</h1>
+        <p className="text-xs text-dark-text-muted mt-0.5">Champions, legends, and numbers that shaped the game.</p>
       </div>
 
-      {/* Year filter pills */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-1 px-1">
         {YEARS.map(y => (
           <button key={y} type="button" onClick={() => setActiveYear(y)}
             className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-medium transition-all active:scale-95
-              ${y === activeYear ? 'bg-gray-900 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200'}
+              ${y === activeYear ? 'bg-dark-accent text-dark-bg shadow-sm' : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
             `}>
             {y}
           </button>

@@ -17,7 +17,7 @@ Tournament: FIFA World Cup 2026 — USA, Canada, Mexico. 48 teams, 104 matches.
   Bad:  "View match statistics and prediction data for your selected teams."
 
 ## Stack
-Next.js 14 App Router · TypeScript · Tailwind CSS · Zustand · SWR · Anthropic SDK
+Next.js 14 App Router · TypeScript · Tailwind CSS · Zustand · SWR · Google Gemini SDK
 
 ## File conventions
 - Pages:      src/app/[route]/page.tsx
@@ -36,10 +36,10 @@ Next.js 14 App Router · TypeScript · Tailwind CSS · Zustand · SWR · Anthrop
 - Spacing: gap-4, p-4, rounded-xl for cards — be consistent
 
 ## Key patterns
-- Always check NEXT_PUBLIC_USE_MOCK_DATA before real API calls
+- API routes auto-fallback to mock data when the relevant API key is missing
 - API-Football calls → src/lib/api-football.ts only (never direct from components)
 - Weather calls → src/lib/weather.ts
-- AI/Claude calls → src/lib/claude.ts (server-side ONLY — never in client components)
+- AI/Gemini calls → src/lib/gemini.ts (server-side ONLY — never in client components)
 - Bracket state → useBracketStore (pickWinner, resetBracket, getBracketShareUrl)
 - Predictions + streak → usePredictionStore
 - SWR hooks poll /api/matches every 30s for live scores
@@ -77,7 +77,7 @@ Next.js 14 App Router · TypeScript · Tailwind CSS · Zustand · SWR · Anthrop
 ## API keys (copy .env.local.example → .env.local)
 - FOOTBALL_API_KEY   → api-football.com (free: 100 req/day)
 - WEATHER_API_KEY    → openweathermap.org (free: 1000 req/day)
-- ANTHROPIC_API_KEY  → console.anthropic.com
+- GEMINI_API_KEY     → aistudio.google.com/apikey
 
 ## Deploy
 vercel --prod  (zero config for Next.js 14)

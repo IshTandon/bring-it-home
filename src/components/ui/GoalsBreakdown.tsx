@@ -18,17 +18,17 @@ export default function GoalsBreakdown({ goals }: { goals: GoalsByType }) {
   const max = Math.max(...Object.values(goals), 1);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">How they score</h3>
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">How they score</h3>
       <div className="space-y-3">
         {BAR_CONFIG.map(({ key, label, color }) => (
           <div key={key} className="flex items-center gap-3">
-            <span className="text-xs text-gray-600 font-medium w-20 shrink-0">{label}</span>
-            <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+            <span className="text-xs text-dark-text-muted font-medium w-20 shrink-0">{label}</span>
+            <div className="flex-1 h-3 bg-dark-border rounded-full overflow-hidden">
               <div className={`h-full rounded-full transition-all duration-500 ${color}`}
                 style={{ width: `${(goals[key] / max) * 100}%` }} />
             </div>
-            <span className="text-xs text-gray-900 font-bold tabular-nums w-5 text-right shrink-0">{goals[key]}</span>
+            <span className="text-xs text-dark-text-primary font-bold tabular-nums w-5 text-right shrink-0">{goals[key]}</span>
           </div>
         ))}
       </div>

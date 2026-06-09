@@ -1,8 +1,6 @@
 /**
  * api-football.ts
  * Wrapper around API-Football (v3.football.api-sports.io).
- * Falls back to mock data when NEXT_PUBLIC_USE_MOCK_DATA=true
- * or when no API key is set.
  *
  * API-Football docs: https://www.api-football.com/documentation-v3
  * Free tier: 100 req/day, all WC endpoints available.
@@ -12,16 +10,14 @@ const BASE_URL = 'https://v3.football.api-sports.io';
 const API_KEY = process.env.FOOTBALL_API_KEY ?? '';
 const WC_LEAGUE = process.env.NEXT_PUBLIC_WC_LEAGUE_ID ?? '1';
 const WC_SEASON = process.env.NEXT_PUBLIC_WC_SEASON ?? '2026';
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || !API_KEY;
 
 interface FetchOptions {
   revalidate?: number | false;
 }
 
 async function apiFetch<T>(endpoint: string, opts: FetchOptions = {}): Promise<T> {
-  if (USE_MOCK) {
-    console.log(`[mock] ${endpoint}`);
-    throw new Error('mock');
+  if (!API_KEY) {
+    throw new Error('FOOTBALL_API_KEY is not set');
   }
 
   const nextOpts: RequestInit['next'] = {};

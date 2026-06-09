@@ -103,20 +103,35 @@ function computeStandings(group: Group, results: MatchResult[]): StandingRow[] {
 }
 
 function generateInsight(standings: StandingRow[], decidedCount: number, totalMatches: number): string {
-  if (decidedCount === 0) return 'Toggle match results to see how the group unfolds.';
+  if (decidedCount === 0) return 'Toggle results above to simulate the group.';
 
-  const [first, second, third] = standings;
+  const [first, second, third, fourth] = standings;
 
   if (decidedCount === totalMatches) {
-    return `${first.team.flag} ${first.team.name} and ${second.team.flag} ${second.team.name} qualify. ${third.team.name} are eliminated.`;
+    return `${first.team.flag} ${first.team.name} qualifies in 1st place. ${second.team.flag} ${second.team.name} qualifies in 2nd. ${third.team.name} ${fourth ? `and ${fourth.team.name} are` : 'is'} eliminated.`;
+  }
+
+  const maxRemainingPts = (totalMatches - decidedCount) * 3;
+
+  if (first.points - third.points > maxRemainingPts) {
+    return `${first.team.flag} ${first.team.name} qualifies in 1st place with these results.`;
+  }
+
+  if (second.points - third.points > maxRemainingPts) {
+    return `${first.team.flag} ${first.team.name} and ${second.team.flag} ${second.team.name} qualify with these results. ${third.team.name} ${fourth ? `and ${fourth.team.name} are` : 'is'} eliminated.`;
+  }
+
+  if (fourth && first.points - fourth.points > maxRemainingPts && third.points - fourth.points > maxRemainingPts) {
+    return `${fourth.team.flag} ${fourth.team.name} is eliminated with these results.`;
+  }
+
+  const teamsInContention = standings.filter(s => first.points - s.points <= maxRemainingPts).length;
+  if (teamsInContention >= 3) {
+    return `${teamsInContention} teams still in contention for 2 spots.`;
   }
 
   if (first.points === second.points) {
     return `${first.team.flag} ${first.team.name} and ${second.team.flag} ${second.team.name} are level on ${first.points} points. Everything still to play for.`;
-  }
-
-  if (first.points - standings[standings.length - 1].points >= 6) {
-    return `${first.team.flag} ${first.team.name} are pulling away. ${standings[standings.length - 1].team.name} need a miracle.`;
   }
 
   return `${first.team.flag} ${first.team.name} lead with ${first.points} pts. ${second.team.flag} ${second.team.name} are ${first.points - second.points} point${first.points - second.points !== 1 ? 's' : ''} behind.`;
@@ -130,12 +145,10 @@ function qualBarColor(prob: number) {
 }
 
 function rowBorderClass(rank: number): string {
-  if (rank <= 2) return 'border-l-4 border-l-[#185FA5]';
-  if (rank === 3) return 'border-l-4 border-l-amber-400';
+  if (rank <= 2) return 'border-l-4 border-l-dark-accent';
+  if (rank === 3) return 'border-l-4 border-l-amber-700';
   return 'border-l-4 border-l-transparent';
 }
-
-/* ─── Match Toggle ────────────────────────────────────────── */
 
 const MatchToggle = memo(function MatchToggle({
   match, result, onChange,
@@ -143,15 +156,15 @@ const MatchToggle = memo(function MatchToggle({
   match: Match; result: Result | null; onChange: (result: Result | null) => void;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-3">
+    <div className="bg-dark-surface border border-dark-border rounded-xl p-3">
       <div className="flex items-center justify-between mb-2">
-        <Link href={`/teams/${match.homeTeam.id}`} className="flex items-center gap-2 flex-1 min-w-0 hover:text-[#185FA5] transition-colors">
+        <Link href={`/teams/${match.homeTeam.id}`} className="flex items-center gap-2 flex-1 min-w-0 hover:text-dark-accent transition-colors">
           <span className="text-lg">{match.homeTeam.flag}</span>
-          <span className="text-xs font-medium text-gray-700 truncate">{match.homeTeam.name}</span>
+          <span className="text-xs font-medium text-dark-text-primary truncate">{match.homeTeam.name}</span>
         </Link>
-        <span className="text-[10px] text-gray-400 font-medium px-2">vs</span>
-        <Link href={`/teams/${match.awayTeam.id}`} className="flex items-center gap-2 flex-1 min-w-0 justify-end hover:text-[#185FA5] transition-colors">
-          <span className="text-xs font-medium text-gray-700 truncate">{match.awayTeam.name}</span>
+        <span className="text-[10px] text-dark-text-muted font-medium px-2">vs</span>
+        <Link href={`/teams/${match.awayTeam.id}`} className="flex items-center gap-2 flex-1 min-w-0 justify-end hover:text-dark-accent transition-colors">
+          <span className="text-xs font-medium text-dark-text-primary truncate">{match.awayTeam.name}</span>
           <span className="text-lg">{match.awayTeam.flag}</span>
         </Link>
       </div>
@@ -162,9 +175,9 @@ const MatchToggle = memo(function MatchToggle({
             className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all active:scale-95
               ${result === opt.value
                 ? opt.value === 'home' ? 'bg-blue-600 text-white'
-                  : opt.value === 'draw' ? 'bg-gray-700 text-white'
+                  : opt.value === 'draw' ? 'bg-dark-text-muted text-white'
                   : 'bg-red-600 text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}
+                : 'bg-dark-border text-dark-text-muted hover:bg-dark-border/70'}
             `}>
             {opt.label}
           </button>
@@ -174,15 +187,13 @@ const MatchToggle = memo(function MatchToggle({
   );
 });
 
-/* ─── Mode Toggle ─────────────────────────────────────────── */
-
 function ModeToggle({ mode, onChange }: { mode: StandingsMode; onChange: (m: StandingsMode) => void }) {
   return (
-    <div className="flex bg-gray-100 rounded-full p-0.5">
+    <div className="flex bg-dark-border rounded-full p-0.5">
       {(['short', 'full'] as const).map((m) => (
         <button key={m} type="button" onClick={() => onChange(m)}
           className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all
-            ${mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}
+            ${mode === m ? 'bg-dark-surface text-dark-text-primary shadow-sm' : 'text-dark-text-muted'}
           `}>
           {m === 'short' ? 'Short' : 'Full'}
         </button>
@@ -191,75 +202,70 @@ function ModeToggle({ mode, onChange }: { mode: StandingsMode; onChange: (m: Sta
   );
 }
 
-/* ─── Standings Table ────────────────────────────────────── */
-
 function StandingsTable({ standings, mode }: { standings: StandingRow[]; mode: StandingsMode }) {
   const isShort = mode === 'short';
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-100">
-            <th className="text-left pl-3 pr-1 py-2 font-medium text-gray-400 w-5">#</th>
-            <th className="text-left px-2 py-2 font-medium text-gray-400">Team</th>
-            <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">{isShort ? 'PL' : 'P'}</th>
-            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">W</th>}
-            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">D</th>}
-            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">L</th>}
-            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">GF</th>}
-            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-7">GA</th>}
-            <th className="text-center px-1.5 py-2 font-medium text-gray-400 w-8">GD</th>
-            <th className="text-center px-2 py-2 font-medium text-gray-900 w-8">PTS</th>
+          <tr className="bg-dark-border/30 border-b border-dark-border">
+            <th className="text-left pl-3 pr-1 py-2 font-medium text-dark-text-muted w-5">#</th>
+            <th className="text-left px-2 py-2 font-medium text-dark-text-muted">Team</th>
+            <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">{isShort ? 'PL' : 'P'}</th>
+            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">W</th>}
+            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">D</th>}
+            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">L</th>}
+            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">GF</th>}
+            {!isShort && <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-7">GA</th>}
+            <th className="text-center px-1.5 py-2 font-medium text-dark-text-muted w-8">GD</th>
+            <th className="text-center px-2 py-2 font-medium text-dark-text-primary w-8">PTS</th>
           </tr>
         </thead>
         <tbody>
           {standings.map((row) => (
             <tr key={row.team.id}
-              className={`border-b border-gray-50 transition-colors ${rowBorderClass(row.rank)}
-                ${row.rank <= 2 ? 'bg-blue-50/30' : row.rank === 3 ? 'bg-amber-50/30' : ''}
+              className={`border-b border-dark-border/50 transition-colors ${rowBorderClass(row.rank)}
+                ${row.rank <= 2 ? 'bg-dark-accent/5' : row.rank === 3 ? 'bg-amber-900/10' : ''}
               `}>
-              <td className="pl-3 pr-1 py-2.5 font-semibold text-gray-400">{row.rank}</td>
+              <td className="pl-3 pr-1 py-2.5 font-semibold text-dark-text-muted">{row.rank}</td>
               <td className="px-2 py-2.5">
-                <Link href={`/teams/${row.team.id}`} className="flex items-center gap-2 hover:text-[#185FA5] transition-colors">
+                <Link href={`/teams/${row.team.id}`} className="flex items-center gap-2 hover:text-dark-accent transition-colors">
                   <span className="text-base">{row.team.flag}</span>
-                  <span className="font-medium text-gray-800 truncate">{row.team.name}</span>
+                  <span className="font-medium text-dark-text-primary truncate">{row.team.name}</span>
                 </Link>
               </td>
-              <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.played}</td>
-              {!isShort && <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.won}</td>}
-              {!isShort && <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.drawn}</td>}
-              {!isShort && <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.lost}</td>}
-              {!isShort && <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.goalsFor}</td>}
-              {!isShort && <td className="text-center px-1.5 py-2.5 text-gray-500 tabular-nums">{row.goalsAgainst}</td>}
-              <td className="text-center px-1.5 py-2.5 font-medium tabular-nums text-gray-700">
+              <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.played}</td>
+              {!isShort && <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.won}</td>}
+              {!isShort && <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.drawn}</td>}
+              {!isShort && <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.lost}</td>}
+              {!isShort && <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.goalsFor}</td>}
+              {!isShort && <td className="text-center px-1.5 py-2.5 text-dark-text-muted tabular-nums">{row.goalsAgainst}</td>}
+              <td className="text-center px-1.5 py-2.5 font-medium tabular-nums text-dark-text-primary">
                 {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
               </td>
-              <td className="text-center px-2 py-2.5 font-bold tabular-nums text-gray-900">{row.points}</td>
+              <td className="text-center px-2 py-2.5 font-bold tabular-nums text-dark-accent">{row.points}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Qualification probability bars — always visible */}
-      <div className="border-t border-gray-100 px-3 py-3 space-y-2">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-1">Qualification probability</p>
+      <div className="border-t border-dark-border px-3 py-3 space-y-2">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-1">Qualification probability</p>
         {standings.map((row) => (
           <div key={row.team.id} className="flex items-center gap-2">
             <Link href={`/teams/${row.team.id}`} className="text-xs w-5 text-center">{row.team.flag}</Link>
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-dark-border rounded-full overflow-hidden">
               <div className={`h-full rounded-full transition-all duration-300 ${qualBarColor(row.qualProb)}`}
                 style={{ width: `${row.qualProb}%` }} />
             </div>
-            <span className="text-[10px] text-gray-400 tabular-nums w-7 text-right font-medium">{Math.round(row.qualProb)}%</span>
+            <span className="text-[10px] text-dark-text-muted tabular-nums w-7 text-right font-medium">{Math.round(row.qualProb)}%</span>
           </div>
         ))}
       </div>
     </div>
   );
 }
-
-/* ─── Group Section ──────────────────────────────────────── */
 
 function GroupSection({ group, mode, onModeChange }: { group: Group; mode: StandingsMode; onModeChange: (m: StandingsMode) => void }) {
   const [results, setResults] = useState<MatchResult[]>(() => defaultResults(group.matches));
@@ -290,18 +296,18 @@ function GroupSection({ group, mode, onModeChange }: { group: Group; mode: Stand
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900">{group.name}</h2>
+        <h2 className="text-sm font-semibold text-dark-text-primary">{group.name}</h2>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-400 tabular-nums">{decidedCount}/{group.matches.length} set</span>
+          <span className="text-[10px] text-dark-text-muted tabular-nums">{decidedCount}/{group.matches.length} set</span>
           <ModeToggle mode={mode} onChange={onModeChange} />
         </div>
       </div>
 
       <StandingsTable standings={standings} mode={mode} />
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-3">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-blue-400 mb-1">What this means</p>
-        <p className="text-sm text-blue-800 leading-relaxed">{insight}</p>
+      <div className="rounded-xl bg-dark-accent/10 border border-dark-accent/30 p-3">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-accent mb-1">What this means</p>
+        <p className="text-sm text-dark-text-primary leading-relaxed">{insight}</p>
       </div>
 
       <div className="space-y-2">
@@ -313,8 +319,6 @@ function GroupSection({ group, mode, onModeChange }: { group: Group; mode: Stand
     </div>
   );
 }
-
-/* ─── Main IfThisHappens ─────────────────────────────────── */
 
 export default function IfThisHappens() {
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
@@ -339,9 +343,9 @@ export default function IfThisHappens() {
   if (!mounted) {
     return (
       <div className="space-y-4">
-        <div className="h-7 w-48 bg-gray-100 rounded animate-pulse" />
-        <div className="h-10 bg-gray-100 rounded-full animate-pulse" />
-        <div className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+        <div className="h-7 w-48 skeleton rounded" />
+        <div className="h-10 skeleton rounded-full" />
+        <div className="h-48 skeleton rounded-xl" />
       </div>
     );
   }
@@ -349,9 +353,9 @@ export default function IfThisHappens() {
   return (
     <div>
       <div className="mb-4">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">Group stage simulator</p>
-        <h1 className="text-xl font-semibold text-gray-900">If This Happens...</h1>
-        <p className="text-xs text-gray-400 mt-1">Toggle match results. Watch the table change.</p>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Group stage simulator</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">If This Happens...</h1>
+        <p className="text-xs text-dark-text-muted mt-1">Toggle match results. Watch the table change.</p>
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">
@@ -359,8 +363,8 @@ export default function IfThisHappens() {
           <button key={group.id} type="button" onClick={() => setActiveGroupIdx(idx)}
             className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-medium transition-all active:scale-95 snap-start
               ${idx === activeGroupIdx
-                ? 'bg-gray-900 text-white shadow-sm'
-                : 'bg-white text-gray-500 border border-gray-200'}
+                ? 'bg-dark-accent text-dark-bg shadow-sm'
+                : 'bg-dark-surface text-dark-text-muted border border-dark-border'}
             `}>
             {group.name.replace('Group ', '')}
           </button>

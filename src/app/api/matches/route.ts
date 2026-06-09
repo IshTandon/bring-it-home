@@ -11,55 +11,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTodayMatches, getLiveMatches } from '@/lib/api-football';
 import { isMatchLive } from '@/lib/matchUtils';
 
-const LIVE_STATUSES = ['1H', 'HT', '2H', 'AET', 'PEN'];
-
-const MOCK_MATCHES = [
-  {
-    id: 'match-1',
-    homeTeam: { id: 'BRA', name: 'Brazil', flag: '🇧🇷', rating: 92 },
-    awayTeam: { id: 'GER', name: 'Germany', flag: '🇩🇪', rating: 85 },
-    homeScore: 2, awayScore: 1,
-    status: '2H', minute: 67,
-    stadium: 'Estadio Azteca', city: 'Mexico City',
-    date: new Date().toISOString().split('T')[0],
-    time: '20:00', round: 'Group E',
-    isLive: true,
-    events: [
-      { minute: 23, type: 'Goal', team: 'Brazil', player: 'Vinicius Jr', detail: 'Normal Goal' },
-      { minute: 44, type: 'Goal', team: 'Germany', player: 'Musiala', detail: 'Normal Goal' },
-      { minute: 51, type: 'Goal', team: 'Brazil', player: 'Rodrygo', detail: 'Normal Goal' },
-      { minute: 61, type: 'Card', team: 'Germany', player: 'Kimmich', detail: 'Yellow Card' },
-    ],
-  },
-  {
-    id: 'match-2',
-    homeTeam: { id: 'FRA', name: 'France', flag: '🇫🇷', rating: 90 },
-    awayTeam: { id: 'ARG', name: 'Argentina', flag: '🇦🇷', rating: 89 },
-    homeScore: null, awayScore: null,
-    status: 'NS', minute: null,
-    stadium: 'SoFi Stadium', city: 'Los Angeles',
-    date: new Date().toISOString().split('T')[0],
-    time: '23:00', round: 'Group D',
-    isLive: false,
-    events: [],
-  },
-  {
-    id: 'match-3',
-    homeTeam: { id: 'ESP', name: 'Spain', flag: '🇪🇸', rating: 88 },
-    awayTeam: { id: 'JPN', name: 'Japan', flag: '🇯🇵', rating: 78 },
-    homeScore: 1, awayScore: 1,
-    status: 'FT', minute: 90,
-    stadium: 'MetLife Stadium', city: 'New Jersey',
-    date: new Date().toISOString().split('T')[0],
-    time: '17:00', round: 'Group E',
-    isLive: false,
-    events: [
-      { minute: 34, type: 'Goal', team: 'Spain', player: 'Yamal', detail: 'Normal Goal' },
-      { minute: 72, type: 'Goal', team: 'Japan', player: 'Mitoma', detail: 'Normal Goal' },
-    ],
-  },
-];
-
 function addIsLive<T extends { status?: string }>(matches: T[]): (T & { isLive: boolean })[] {
   return matches.map(m => ({
     ...m,
@@ -76,21 +27,70 @@ function dedupeById<T extends { id: string }>(arr: T[]): T[] {
   });
 }
 
+function getMockMatches() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  return [
+    {
+      id: 'mock-1',
+      homeTeam: { id: 'GER', name: 'Germany', flag: '🇩🇪', rating: 90, rank: 6, group: 'E', coach: 'Julian Nagelsmann', mascot: '', style: '', titles: 4, finals: 8, semifinals: 13, bestResult: 'Winners (4x)', facts: [], players: [] },
+      awayTeam: { id: 'JPN', name: 'Japan', flag: '🇯🇵', rating: 80, rank: 18, group: 'E', coach: 'Hajime Moriyasu', mascot: '', style: '', titles: 0, finals: 0, semifinals: 0, bestResult: 'Round of 16', facts: [], players: [] },
+      homeScore: 1,
+      awayScore: 2,
+      status: 'FT',
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      date: today,
+      time: '11:00 ET',
+      round: 'Group E',
+      group: 'E',
+      events: [
+        { minute: 23, type: 'Goal', team: 'Germany', player: 'Musiala', detail: 'Open play' },
+        { minute: 51, type: 'Goal', team: 'Japan', player: 'Mitoma', detail: 'Counter-attack' },
+        { minute: 78, type: 'Goal', team: 'Japan', player: 'Kubo', detail: 'Free kick' },
+      ],
+    },
+    {
+      id: 'mock-2',
+      homeTeam: { id: 'BRA', name: 'Brazil', flag: '🇧🇷', rating: 92, rank: 3, group: 'G', coach: 'Dorival Jr.', mascot: '', style: '', titles: 5, finals: 7, semifinals: 11, bestResult: 'Winners (5x)', facts: [], players: [] },
+      awayTeam: { id: 'SUI', name: 'Switzerland', flag: '🇨🇭', rating: 82, rank: 15, group: 'G', coach: 'Murat Yakin', mascot: '', style: '', titles: 0, finals: 0, semifinals: 3, bestResult: 'Quarter-finals', facts: [], players: [] },
+      homeScore: null,
+      awayScore: null,
+      status: 'NS',
+      stadium: 'MetLife Stadium',
+      city: 'New York',
+      date: today,
+      time: '14:00 ET',
+      round: 'Group G',
+      group: 'G',
+      events: [],
+    },
+    {
+      id: 'mock-3',
+      homeTeam: { id: 'USA', name: 'United States', flag: '🇺🇸', rating: 86, rank: 11, group: 'A', coach: 'Mauricio Pochettino', mascot: '', style: '', titles: 0, finals: 0, semifinals: 1, bestResult: 'Semi-finals (1930)', facts: [], players: [] },
+      awayTeam: { id: 'ENG', name: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', rating: 91, rank: 4, group: 'A', coach: 'Thomas Tuchel', mascot: '', style: '', titles: 1, finals: 2, semifinals: 4, bestResult: 'Winners (1966)', facts: [], players: [] },
+      homeScore: null,
+      awayScore: null,
+      status: 'NS',
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      date: today,
+      time: '20:00 ET',
+      round: 'Group A',
+      group: 'A',
+      events: [],
+    },
+  ];
+}
+
 export async function GET(request: NextRequest) {
   const mode = request.nextUrl.searchParams.get('mode') ?? 'all';
   const now = new Date().toISOString();
 
-  const useMock = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || !process.env.FOOTBALL_API_KEY;
-
-  if (useMock) {
-    let filtered = MOCK_MATCHES;
-    if (mode === 'live') {
-      filtered = MOCK_MATCHES.filter(m => LIVE_STATUSES.includes(m.status));
-    } else if (mode === 'today') {
-      // all mock matches are "today" by definition
-    }
+  if (!process.env.FOOTBALL_API_KEY) {
+    const mockMatches = getMockMatches();
     return NextResponse.json({
-      matches: filtered,
+      matches: addIsLive(mockMatches),
       lastUpdated: now,
       isMock: true,
     });
@@ -115,7 +115,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // mode=all: merge live + today, dedupe
     const [liveRes, todayRes] = await Promise.allSettled([
       getLiveMatches() as Promise<{ id: string; status?: string }[]>,
       getTodayMatches() as Promise<{ id: string; status?: string }[]>,
@@ -129,11 +128,8 @@ export async function GET(request: NextRequest) {
       lastUpdated: now,
       isMock: false,
     });
-  } catch {
-    return NextResponse.json({
-      matches: MOCK_MATCHES,
-      lastUpdated: now,
-      isMock: true,
-    });
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') console.error('[matches] error:', err);
+    return NextResponse.json({ matches: [], lastUpdated: now, isMock: true });
   }
 }

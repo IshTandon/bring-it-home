@@ -254,6 +254,40 @@ export interface SimResult {
   narrative: string;
 }
 
+// ─── "I Called It" Moments ────────────────────────────────
+export interface CalledItMoment {
+  id: string;
+  matchId: string;
+  round: Round;
+  matchIndex: number;
+  teamPicked: { id: string; name: string; flag: string; rank: number };
+  teamOpponent: { id: string; name: string; flag: string; rank: number };
+  result: string;
+  timestamp: string;
+  headline: string;
+}
+
+// ─── Daily Prediction Streaks ─────────────────────────────
+export type DailyPick = 'home' | 'draw' | 'away';
+
+export interface DailyPrediction {
+  matchId: string;
+  date: string;
+  pick: DailyPick;
+  homeTeam: { id: string; name: string; flag: string };
+  awayTeam: { id: string; name: string; flag: string };
+  lockedAt: string;
+  result?: 'correct' | 'wrong' | 'pending';
+  actualResult?: DailyPick;
+}
+
+export interface StreakState {
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: string;
+  predictions: DailyPrediction[];
+}
+
 // ─── API Responses ────────────────────────────────────────
 export interface ApiResponse<T> {
   data: T;

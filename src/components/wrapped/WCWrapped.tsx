@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { usePredictionStore } from '@/lib/store';
 import { useBracketStore } from '@/lib/store';
 
@@ -193,8 +194,8 @@ function MomentsCarousel() {
 
   return (
     <div className="mb-8">
-      <h2 className="text-sm font-semibold text-gray-900 mb-1">While you wait</h2>
-      <p className="text-xs text-gray-400 mb-4">The moments that made the tournament.</p>
+      <h2 className="text-sm font-semibold text-dark-text-primary mb-1">While you wait</h2>
+      <p className="text-xs text-dark-text-muted mb-4">The moments that made the tournament.</p>
 
       <div
         ref={scrollRef}
@@ -203,17 +204,17 @@ function MomentsCarousel() {
         onTouchStart={handleTouch}
       >
         {MOMENTS.map((m, i) => (
-          <div key={i} className="snap-center shrink-0 w-[90vw] max-w-[380px] rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+          <div key={i} className="snap-center shrink-0 w-[90vw] max-w-[380px] rounded-xl overflow-hidden border border-dark-border shadow-sm bg-dark-surface">
             <div className={`bg-gradient-to-br ${m.gradient} h-36 flex items-center justify-center relative`}>
               <span className="text-7xl">{m.flag}</span>
               <span className="absolute bottom-2 right-3 text-white/30 text-xs font-bold">{m.year}</span>
             </div>
             <div className="p-4">
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-[10px] text-gray-400 font-medium">{m.year} · {m.host}</span>
+                <span className="text-[10px] text-dark-text-muted font-medium">{m.year} · {m.host}</span>
               </div>
-              <h3 className="text-sm font-bold text-gray-900 mb-1.5">{m.headline}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed mb-3">{m.story}</p>
+              <h3 className="text-sm font-bold text-dark-text-primary mb-1.5">{m.headline}</h3>
+              <p className="text-xs text-dark-text-muted leading-relaxed mb-3">{m.story}</p>
               <div className="flex gap-1.5">
                 {m.teams.map((t, j) => (
                   <span key={j} className="text-base">{t}</span>
@@ -227,7 +228,7 @@ function MomentsCarousel() {
       {/* Dot indicators */}
       <div className="flex justify-center gap-1.5 mt-3">
         {MOMENTS.map((_, i) => (
-          <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-4 bg-[#185FA5]' : 'w-1.5 bg-gray-200'}`} />
+          <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-4 bg-dark-accent' : 'w-1.5 skeleton'}`} />
         ))}
       </div>
     </div>
@@ -248,14 +249,14 @@ const FACTS = [
 function FastFacts() {
   return (
     <div className="mb-8">
-      <h2 className="text-sm font-semibold text-gray-900 mb-1">Know before you go</h2>
-      <p className="text-xs text-gray-400 mb-4">WC 2026 in numbers.</p>
+      <h2 className="text-sm font-semibold text-dark-text-primary mb-1">Know before you go</h2>
+      <p className="text-xs text-dark-text-muted mb-4">WC 2026 in numbers.</p>
       <div className="grid grid-cols-2 gap-3">
         {FACTS.map((f, i) => (
-          <div key={i} className="bg-white border border-gray-100 rounded-xl p-3.5">
-            <span className="text-2xl font-bold text-gray-900 block leading-none mb-1">{f.big}</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#185FA5] block mb-1">{f.label}</span>
-            <p className="text-[11px] text-gray-400 leading-relaxed">{f.detail}</p>
+          <div key={i} className="bg-dark-surface border border-dark-border rounded-xl p-3.5">
+            <span className="text-2xl font-bold text-dark-text-primary block leading-none mb-1">{f.big}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-dark-accent block mb-1">{f.label}</span>
+            <p className="text-[11px] text-dark-text-muted leading-relaxed">{f.detail}</p>
           </div>
         ))}
       </div>
@@ -268,19 +269,19 @@ function FastFacts() {
 function WinnersTimeline() {
   return (
     <div className="mb-8">
-      <h2 className="text-sm font-semibold text-gray-900 mb-1">Who brought it home before</h2>
-      <p className="text-xs text-gray-400 mb-4">The last ten champions.</p>
+      <h2 className="text-sm font-semibold text-dark-text-primary mb-1">Who brought it home before</h2>
+      <p className="text-xs text-dark-text-muted mb-4">The last ten champions.</p>
       <div className="space-y-0">
         {WINNERS.map((w, i) => (
           <div key={i} className="flex gap-3 relative">
             {/* Timeline line */}
             {i < WINNERS.length - 1 && (
-              <div className="absolute left-[27px] top-8 w-0.5 h-full bg-gray-100" />
+              <div className="absolute left-[27px] top-8 w-0.5 h-full bg-dark-border" />
             )}
 
             {/* Year chip */}
             <div className="shrink-0 w-14 pt-1.5">
-              <span className="inline-flex items-center justify-center w-14 h-7 rounded-full bg-gray-100 text-[11px] font-bold text-gray-600 tabular-nums relative z-10">
+              <span className="inline-flex items-center justify-center w-14 h-7 rounded-full bg-dark-border text-[11px] font-bold text-dark-text-muted tabular-nums relative z-10">
                 {w.year}
               </span>
             </div>
@@ -290,12 +291,12 @@ function WinnersTimeline() {
               <div className="flex items-start gap-2">
                 <span className="text-lg">{w.flag}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{w.winner}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm font-semibold text-dark-text-primary">{w.winner}</p>
+                  <p className="text-xs text-dark-text-muted">
                     beat {w.opponent} {w.score}
                   </p>
                   {w.badge && (
-                    <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-600">
+                    <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-900/20 text-amber-600">
                       {w.badge}
                     </span>
                   )}
@@ -325,7 +326,7 @@ function PredictionPreview() {
       <p className="text-xs text-white/50 mb-5">
         Predictions lock when the tournament begins.
       </p>
-      <Link href="/bracket" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white text-[#185FA5] text-sm font-semibold transition-all active:scale-95">
+      <Link href="/bracket" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark-surface text-dark-accent text-sm font-semibold transition-all active:scale-95">
         Build your bracket →
       </Link>
     </div>
@@ -335,18 +336,22 @@ function PredictionPreview() {
 /* ─── Phase 1: Pre-tournament ─────────────────────────────── */
 
 function PreTournament() {
+  const { containerRef, getRevealProps } = useScrollReveal<HTMLDivElement>({ staggerDelay: 100 });
+
   return (
     <div>
       <div className="mb-6">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">WC Wrapped</p>
-        <h1 className="text-xl font-semibold text-gray-900">The wait is almost over</h1>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">WC Wrapped</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">The wait is almost over</h1>
       </div>
 
-      <Countdown />
-      <MomentsCarousel />
-      <FastFacts />
-      <WinnersTimeline />
-      <PredictionPreview />
+      <div ref={containerRef} className="space-y-4">
+        <div {...getRevealProps(0)}><Countdown /></div>
+        <div {...getRevealProps(1)}><MomentsCarousel /></div>
+        <div {...getRevealProps(2)}><FastFacts /></div>
+        <div {...getRevealProps(3)}><WinnersTimeline /></div>
+        <div {...getRevealProps(4)}><PredictionPreview /></div>
+      </div>
     </div>
   );
 }
@@ -399,9 +404,9 @@ function LiveTournament() {
   if (!hydrated) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-6 w-48 bg-gray-100 rounded" />
+        <div className="h-6 w-48 bg-dark-border rounded" />
         <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-gray-100 rounded-xl" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-dark-border rounded-xl" />)}
         </div>
       </div>
     );
@@ -416,32 +421,32 @@ function LiveTournament() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">WC Wrapped</p>
-        <h1 className="text-xl font-semibold text-gray-900">Your World Cup, Day {matchday}</h1>
-        <p className="text-xs text-gray-400 mt-0.5">{dateStr}</p>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">WC Wrapped</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">Your World Cup, Day {matchday}</h1>
+        <p className="text-xs text-dark-text-muted mt-0.5">{dateStr}</p>
       </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-white border border-gray-100 rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-gray-900 block tabular-nums">
+        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+          <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
             {userStats.correctPredictions}/{userStats.totalPredictions}
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 block">Correct picks</span>
+          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Correct picks</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-[#185FA5] block tabular-nums">{accuracy}%</span>
-          <span className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 block">Accuracy</span>
+        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+          <span className="text-3xl font-bold text-dark-accent block tabular-nums">{accuracy}%</span>
+          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Accuracy</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-gray-900 block tabular-nums">
+        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+          <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
             {userStats.streak} 🔥
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 block">Streak</span>
+          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Streak</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-xl p-4 text-center">
-          <span className="text-lg font-bold text-gray-900 block leading-tight">{userStats.fanIQLevel}</span>
-          <span className="text-[10px] uppercase tracking-widest text-gray-400 mt-1 block">Fan IQ</span>
+        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+          <span className="text-lg font-bold text-dark-text-primary block leading-tight">{userStats.fanIQLevel}</span>
+          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Fan IQ</span>
         </div>
       </div>
 
@@ -449,12 +454,12 @@ function LiveTournament() {
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-5 mb-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">Today&apos;s story</p>
         {narrativeLoading ? (
-          <div className="h-12 bg-white/10 rounded animate-pulse" />
+          <div className="h-12 bg-dark-surface/10 rounded animate-pulse" />
         ) : (
           <p className="text-sm text-white/90 leading-relaxed mb-4">{narrative}</p>
         )}
         <button type="button" onClick={handleShare}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white text-xs font-medium active:bg-white/20 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-dark-surface/10 text-white text-xs font-medium active:bg-dark-surface/20 transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
           </svg>
@@ -464,13 +469,13 @@ function LiveTournament() {
 
       {/* Champion progress */}
       {champion && (
-        <div className="bg-white border border-gray-100 rounded-xl p-4 mb-6">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Your champion pick</p>
+        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 mb-6">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted mb-3">Your champion pick</p>
           <div className="flex items-center gap-3">
             <span className="text-3xl">{champion.flag}</span>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{champion.name}</p>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-600 mt-0.5">
+              <p className="text-sm font-semibold text-dark-text-primary">{champion.name}</p>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-900/30 text-green-400 border border-green-800/50 mt-0.5">
                 Still alive
               </span>
             </div>
@@ -479,8 +484,8 @@ function LiveTournament() {
       )}
 
       {!champion && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center mb-6">
-          <p className="text-sm text-[#185FA5] font-medium mb-2">You haven&apos;t picked a champion yet.</p>
+        <div className="bg-blue-900/20 border border-blue-800/50 rounded-xl p-4 text-center mb-6">
+          <p className="text-sm text-dark-accent font-medium mb-2">You haven&apos;t picked a champion yet.</p>
           <Link href="/bracket" className="btn-primary text-xs px-5 py-2">
             Build your bracket →
           </Link>
@@ -489,8 +494,8 @@ function LiveTournament() {
 
       {predictions.length === 0 && (
         <div className="text-center py-6">
-          <p className="text-sm text-gray-400 mb-2">No predictions yet. Start picking winners.</p>
-          <Link href="/bracket" className="text-sm text-[#185FA5] font-medium">Go to bracket →</Link>
+          <p className="text-sm text-dark-text-muted mb-2">No predictions yet. Start picking winners.</p>
+          <Link href="/bracket" className="text-sm text-dark-accent font-medium">Go to bracket →</Link>
         </div>
       )}
     </div>
@@ -513,8 +518,8 @@ function PostTournament() {
   if (!hydrated) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-6 w-48 bg-gray-100 rounded" />
-        <div className="h-64 bg-gray-100 rounded-xl" />
+        <div className="h-6 w-48 bg-dark-border rounded" />
+        <div className="h-64 bg-dark-border rounded-xl" />
       </div>
     );
   }
@@ -544,8 +549,8 @@ function PostTournament() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 mb-0.5">WC Wrapped</p>
-        <h1 className="text-xl font-semibold text-gray-900">Your 2026 World Cup Story</h1>
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">WC Wrapped</p>
+        <h1 className="text-xl font-semibold text-dark-text-primary">Your 2026 World Cup Story</h1>
       </div>
 
       {/* Recap card */}
@@ -561,28 +566,28 @@ function PostTournament() {
         )}
 
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-white/10 rounded-xl p-3">
+          <div className="bg-dark-surface/10 rounded-xl p-3">
             <span className="text-2xl font-bold text-white block tabular-nums">{accuracy}%</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-0.5 block">Accuracy</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-3">
+          <div className="bg-dark-surface/10 rounded-xl p-3">
             <span className="text-2xl font-bold text-white block tabular-nums">{userStats.longestStreak}</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-0.5 block">Best streak</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-3">
+          <div className="bg-dark-surface/10 rounded-xl p-3">
             <span className="text-2xl font-bold text-white block tabular-nums">
               {userStats.correctPredictions}/{userStats.totalPredictions}
             </span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-0.5 block">Correct</span>
           </div>
-          <div className="bg-white/10 rounded-xl p-3">
+          <div className="bg-dark-surface/10 rounded-xl p-3">
             <span className="text-base font-bold text-white block leading-tight">{userStats.fanIQLevel}</span>
             <span className="text-[10px] uppercase tracking-widest text-white/40 mt-0.5 block">Fan IQ</span>
           </div>
         </div>
 
         <button type="button" onClick={handleShare}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white text-[#0A1628] text-sm font-semibold active:scale-95 transition-transform">
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark-surface text-[#0A1628] text-sm font-semibold active:scale-95 transition-transform">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
           </svg>

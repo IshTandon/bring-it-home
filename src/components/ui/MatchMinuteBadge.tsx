@@ -17,7 +17,7 @@ export default function MatchMinuteBadge({ status, minute, time }: Props) {
 
   if (status === 'NS') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-semibold tabular-nums">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-300 text-[10px] font-semibold tabular-nums">
         {label}
       </span>
     );
@@ -25,7 +25,7 @@ export default function MatchMinuteBadge({ status, minute, time }: Props) {
 
   if (status === 'HT') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300 text-[10px] font-bold">
         HT
       </span>
     );
@@ -33,7 +33,7 @@ export default function MatchMinuteBadge({ status, minute, time }: Props) {
 
   if (status === 'FT') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dark-border text-dark-text-muted text-[10px] font-bold">
         FT
       </span>
     );
@@ -52,7 +52,7 @@ export default function MatchMinuteBadge({ status, minute, time }: Props) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-semibold tabular-nums">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dark-border text-dark-text-muted text-[10px] font-semibold tabular-nums">
       {label}
     </span>
   );

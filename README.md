@@ -40,7 +40,7 @@ Open `http://localhost:3000`. Runs fully on mock data — no API keys needed to 
 |---|---|---|---|
 | API-Football | Live scores, standings, players | 100 req/day | api-football.com |
 | OpenWeatherMap | Match-day weather per stadium city | 1,000 req/day | openweathermap.org |
-| Anthropic Claude | AI narrative + tactical explainer | Pay-per-use (~$0.01/call) | console.anthropic.com |
+| Google Gemini | AI narrative + tactical explainer | Free tier available | aistudio.google.com |
 
 Copy `.env.local.example` → `.env.local` and fill in your keys.
 
@@ -70,7 +70,7 @@ src/
   lib/
     api-football.ts API-Football wrapper (mock fallback built in)
     weather.ts      OpenWeatherMap wrapper
-    claude.ts       Anthropic SDK — server-side only
+    gemini.ts       Google Gemini SDK — server-side only
     store.ts        Zustand (bracket state + predictions, persisted to localStorage)
     data.ts         All mock data
   hooks/
