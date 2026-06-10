@@ -29,7 +29,7 @@ export const SQUAD_FRA: SquadList = {
     fwd: [
       { id: 'mbappe', name: 'Mbappé', number: 10, club: 'Real Madrid', age: 27 },
       { id: 'dembele', name: 'Dembélé', number: 11, club: 'PSG', age: 27 },
-      { id: 'griezmann', name: 'Griezmann', number: 7, club: 'Atletico Madrid', age: 35 },
+      { id: 'barcola', name: 'Barcola', number: 7, club: 'PSG', age: 22 },
       { id: 'thuram', name: 'Thuram', number: 9, club: 'Inter Milan', age: 27 },
       { id: 'kolo-muani', name: 'Kolo Muani', number: 20, club: 'Juventus', age: 26 },
       { id: 'coman', name: 'Coman', number: 3, club: 'Bayern Munich', age: 28 },

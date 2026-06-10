@@ -562,33 +562,17 @@ function TeamInfoContent({ team }: { team: Team }) {
 /* ─── Stadium Info ──────────────────────────────────────────── */
 
 function StadiumInfoContent({ stadium }: { stadium: Stadium }) {
+  const countryLabel = stadium.hostCountry === 'USA' ? 'United States' : stadium.hostCountry === 'MEX' ? 'Mexico' : 'Canada';
   return (
     <div className="px-5 pb-8">
       <div className="pt-2 mb-4">
         <h2 className="text-lg font-semibold text-dark-text-primary">{stadium.name}</h2>
-        <p className="text-xs text-dark-text-muted">{stadium.city}, {stadium.country}</p>
+        <p className="text-xs text-dark-text-muted">{stadium.city}, {countryLabel}</p>
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-5">
+      <div className="grid grid-cols-2 gap-2 mb-5">
         <div className="stat-box"><div className="stat-num text-base">{(stadium.capacity / 1000).toFixed(0)}k</div><div className="stat-lbl">Capacity</div></div>
-        <div className="stat-box"><div className="stat-num text-base">{stadium.opened}</div><div className="stat-lbl">Opened</div></div>
-        <div className="stat-box"><div className="stat-num text-base">{stadium.cost.replace('$', '').split(' ')[0]}</div><div className="stat-lbl">Cost</div></div>
+        <div className="stat-box"><div className="stat-num text-base">{stadium.hostCountry}</div><div className="stat-lbl">Country</div></div>
       </div>
-      <div className="space-y-1.5 text-sm text-dark-text-muted mb-5">
-        <p><span className="font-medium text-dark-text-primary">Surface:</span> {stadium.surface}</p>
-        <p><span className="font-medium text-dark-text-primary">Hosting:</span> {stadium.host}</p>
-      </div>
-      {stadium.facts.length > 0 && (
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-widest text-dark-text-muted mb-2">Did you know?</h3>
-          <ul className="space-y-2">
-            {stadium.facts.map((fact, i) => (
-              <li key={i} className="text-sm text-dark-text-muted leading-relaxed flex gap-2">
-                <span className="text-green-500 font-bold shrink-0">•</span>{fact}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
@@ -816,7 +800,7 @@ function BracketInner() {
   }, [getBracketShareUrl]);
 
   const handleStadiumClick = useCallback((name: string) => {
-    const stadium = STADIUMS[name];
+    const stadium = STADIUMS.find(s => s.name === name);
     if (stadium) setSelectedStadium(stadium);
   }, []);
 

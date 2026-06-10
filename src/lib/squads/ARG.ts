@@ -31,7 +31,7 @@ export const SQUAD_ARG: SquadList = {
       { id: 'alvarez', name: 'Álvarez', number: 9, club: 'Atletico Madrid', age: 24 },
       { id: 'dybala', name: 'Dybala', number: 21, club: 'Roma', age: 32 },
       { id: 'lautaro-martinez', name: 'Lautaro Martínez', number: 22, club: 'Inter Milan', age: 27 },
-      { id: 'di-maria', name: 'Di María', number: 11, club: 'Benfica', age: 36 },
+      { id: 'nico-gonzalez', name: 'Nico González', number: 11, club: 'Juventus', age: 27 },
       { id: 'garnacho', name: 'Garnacho', number: 17, club: 'Man Utd', age: 20 },
       { id: 'soule', name: 'Soulé', number: 15, club: 'Roma', age: 21 },
     ],

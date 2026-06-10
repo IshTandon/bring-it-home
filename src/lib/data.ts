@@ -180,56 +180,24 @@ PLAYERS.forEach(p => {
   });
 });
 
-export const STADIUMS: Record<string, Stadium> = {
-  'MetLife Stadium': {
-    name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500,
-    surface: 'Natural grass', opened: 2010, cost: '$1.6 billion',
-    host: 'Final + 8 other matches',
-    facts: [
-      'Largest stadium in the WC tournament — 82,500 seats',
-      'Home of NY Giants and NY Jets',
-      'Open air — weather can be extreme in July',
-      'Built specifically to host major events',
-    ],
-    coordinates: { lat: 40.8135, lng: -74.0745 },
-  },
-  'AT&T Stadium': {
-    name: 'AT&T Stadium', city: 'Arlington', country: 'USA', capacity: 80000,
-    surface: 'Retractable artificial turf', opened: 2009, cost: '$1.3 billion',
-    host: '8 matches including a semifinal',
-    facts: [
-      'Climate-controlled dome — no weather issues for players or fans',
-      'The roof opens in just 18 minutes',
-      'Has the world\'s largest HD video screen (160m wide)',
-      'Known as "Jerry World" after owner Jerry Jones',
-    ],
-    coordinates: { lat: 32.7473, lng: -97.0945 },
-  },
-  'SoFi Stadium': {
-    name: 'SoFi Stadium', city: 'Inglewood', country: 'USA', capacity: 70240,
-    surface: 'Artificial turf', opened: 2020, cost: '$5.5 billion (most expensive ever)',
-    host: '8 matches',
-    facts: [
-      'Most expensive stadium ever constructed',
-      '70,000 sq ft HD screen wrapping the seating bowl',
-      'Fully enclosed but not climate controlled',
-      'Home of LA Rams and LA Chargers',
-    ],
-    coordinates: { lat: 33.9535, lng: -118.3392 },
-  },
-  'Estadio Azteca': {
-    name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523,
-    surface: 'Natural grass', opened: 1966, cost: 'Renovated for $100M in 2023',
-    host: '3 group stage matches',
-    facts: [
-      'Highest altitude WC venue at 2,240m — affects stamina significantly',
-      'Only stadium to host 2 WC finals (1970 and 1986)',
-      'Maradona\'s "Hand of God" goal was scored here in 1986',
-      'Original capacity was 105,000 — reduced after 1985 earthquake',
-    ],
-    coordinates: { lat: 19.3029, lng: -99.1505 },
-  },
-};
+export const STADIUMS: Stadium[] = [
+  { id: 'metlife',   name: 'MetLife Stadium',          city: 'East Rutherford, NJ', capacity: 82500,  lat: 40.8128,  lng: -74.0742,   hostCountry: 'USA' },
+  { id: 'att',       name: 'AT&T Stadium',             city: 'Arlington, TX',       capacity: 80000,  lat: 32.7473,  lng: -97.0945,   hostCountry: 'USA' },
+  { id: 'sofi',      name: 'SoFi Stadium',             city: 'Inglewood, CA',       capacity: 70240,  lat: 33.9535,  lng: -118.3392,  hostCountry: 'USA' },
+  { id: 'hard-rock', name: 'Hard Rock Stadium',        city: 'Miami Gardens, FL',   capacity: 64767,  lat: 25.9580,  lng: -80.2389,   hostCountry: 'USA' },
+  { id: 'lumen',     name: 'Lumen Field',              city: 'Seattle, WA',         capacity: 68740,  lat: 47.5952,  lng: -122.3316,  hostCountry: 'USA' },
+  { id: 'lincoln',   name: 'Lincoln Financial Field',  city: 'Philadelphia, PA',    capacity: 69176,  lat: 39.9008,  lng: -75.1674,   hostCountry: 'USA' },
+  { id: 'nrg',       name: 'NRG Stadium',              city: 'Houston, TX',         capacity: 72220,  lat: 29.6847,  lng: -95.4107,   hostCountry: 'USA' },
+  { id: 'mercedes',  name: 'Mercedes-Benz Stadium',    city: 'Atlanta, GA',         capacity: 71000,  lat: 33.7554,  lng: -84.4010,   hostCountry: 'USA' },
+  { id: 'gillette',  name: 'Gillette Stadium',         city: 'Foxborough, MA',      capacity: 65878,  lat: 42.0909,  lng: -71.2643,   hostCountry: 'USA' },
+  { id: 'arrowhead', name: 'GEHA Field at Arrowhead',  city: 'Kansas City, MO',     capacity: 76416,  lat: 39.0489,  lng: -94.4839,   hostCountry: 'USA' },
+  { id: 'levis',     name: "Levi's Stadium",           city: 'Santa Clara, CA',     capacity: 68500,  lat: 37.4033,  lng: -121.9694,  hostCountry: 'USA' },
+  { id: 'azteca',    name: 'Estadio Azteca',           city: 'Mexico City',         capacity: 87523,  lat: 19.3029,  lng: -99.1505,   hostCountry: 'MEX' },
+  { id: 'akron',     name: 'Estadio Akron',            city: 'Guadalajara',         capacity: 49850,  lat: 20.6826,  lng: -103.4625,  hostCountry: 'MEX' },
+  { id: 'bbva',      name: 'Estadio BBVA',             city: 'Monterrey',           capacity: 53500,  lat: 25.6699,  lng: -100.2459,  hostCountry: 'MEX' },
+  { id: 'bmo',       name: 'BMO Field',                city: 'Toronto',             capacity: 45736,  lat: 43.6332,  lng: -79.4186,   hostCountry: 'CAN' },
+  { id: 'bc-place',  name: 'BC Place',                 city: 'Vancouver',           capacity: 54500,  lat: 49.2768,  lng: -123.1117,  hostCountry: 'CAN' },
+];
 
 function findTeam(id: string) { return TEAMS.find(t => t.id === id)!; }
 
@@ -262,8 +230,8 @@ function buildGroupMatches(teamIds: string[], groupId: string): Match[] {
   }));
 }
 
-const STADIUM_NAMES = ['MetLife Stadium', 'AT&T Stadium', 'SoFi Stadium', 'Estadio Azteca'];
-const STADIUM_CITIES = ['East Rutherford', 'Arlington', 'Inglewood', 'Mexico City'];
+const STADIUM_NAMES = STADIUMS.map(s => s.name);
+const STADIUM_CITIES = STADIUMS.map(s => s.city);
 const MATCH_TIMES_G = ['14:00 ET', '17:00 ET', '20:00 ET'];
 
 export const MOCK_GROUPS: Group[] = GROUP_DEFS.map(g => ({

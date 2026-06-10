@@ -191,7 +191,7 @@ const HISTORY_FACTS = [
   'The highest-scoring WC final was 1958: Brazil 5–2 Sweden.',
   'Only 8 nations have ever won the World Cup.',
   'The 2022 final (Argentina vs France) is considered the greatest WC final of all time.',
-  'Germany holds the record for most goals scored in WC history: 232.',
+  'Brazil hold the record for most World Cup goals scored with 237 goals across all tournaments, the most by any nation in history.',
   'The first World Cup was held in Uruguay in 1930 with just 13 teams.',
   'Italy has won back-to-back World Cups (1934, 1938) — one of only two teams to do so.',
   'Miroslav Klose holds the all-time WC scoring record with 16 goals.',

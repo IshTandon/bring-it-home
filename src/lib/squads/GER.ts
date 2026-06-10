@@ -18,7 +18,7 @@ export const SQUAD_GER: SquadList = {
     ],
     mid: [
       { id: 'goretzka', name: 'Goretzka', number: 8, club: 'Bayern Munich', age: 30 },
-      { id: 'gundogan', name: 'Gündogan', number: 21, club: 'Barcelona', age: 34 },
+      { id: 'brandt', name: 'Brandt', number: 21, club: 'Dortmund', age: 30 },
       { id: 'andrich', name: 'Andrich', number: 23, club: 'Leverkusen', age: 30 },
       { id: 'pavlovic', name: 'Pavlovic', number: 18, club: 'Bayern Munich', age: 20 },
       { id: 'gross', name: 'Gross', number: 16, club: 'Dortmund', age: 22 },

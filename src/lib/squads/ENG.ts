@@ -3,7 +3,7 @@ import type { SquadList } from '@/types';
 export const SQUAD_ENG: SquadList = {
     gk: [
       { id: 'pickford', name: 'Pickford', number: 1, club: 'Everton', age: 32 },
-      { id: 'raya', name: 'Raya', number: 23, club: 'Arsenal', age: 29 },
+      { id: 'pope', name: 'Pope', number: 23, club: 'Newcastle', age: 33 },
       { id: 'henderson', name: 'Henderson', number: 13, club: 'Crystal Palace', age: 31 },
     ],
     def: [

@@ -168,22 +168,13 @@ export interface BracketState {
 
 // ─── Stadiums ─────────────────────────────────────────────
 export interface Stadium {
+  id: string;
   name: string;
   city: string;
-  country: string;
   capacity: number;
-  surface: string;
-  opened: number;
-  cost: string;
-  host: string;
-  facts: string[];
-  coordinates: { lat: number; lng: number };
-  weather?: {
-    temp: number;
-    description: string;
-    humidity: number;
-    wind: number;
-  };
+  lat: number;
+  lng: number;
+  hostCountry: 'USA' | 'MEX' | 'CAN';
 }
 
 // ─── Timeline / Story ─────────────────────────────────────

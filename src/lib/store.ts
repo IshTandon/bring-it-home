@@ -24,7 +24,12 @@ interface BracketStore {
   loadBracketFromUrl: (encoded: string) => boolean;
 }
 
-const STADIUM_NAMES = ['MetLife Stadium', 'AT&T Stadium', 'SoFi Stadium', 'Estadio Azteca'];
+const STADIUM_NAMES = [
+  'MetLife Stadium', 'AT&T Stadium', 'SoFi Stadium', 'Hard Rock Stadium',
+  'Lumen Field', 'Lincoln Financial Field', 'NRG Stadium', 'Mercedes-Benz Stadium',
+  'Gillette Stadium', 'GEHA Field at Arrowhead', "Levi's Stadium",
+  'Estadio Azteca', 'Estadio Akron', 'Estadio BBVA', 'BMO Field', 'BC Place',
+];
 const MATCH_TIMES = ['14:00 ET', '17:00 ET', '20:00 ET', '13:00 ET'];
 
 function seedBracket(teams: typeof TEAMS): typeof TEAMS {

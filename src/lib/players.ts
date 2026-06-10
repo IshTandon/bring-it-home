@@ -1,6 +1,11 @@
 import type { Player, SquadList } from '@/types';
 import { TEAMS } from './teams';
 import { SQUADS_TOP12 } from './data-squads-top12';
+import { PLAYER_STATS_OVERRIDE } from './player-stats-override';
+
+function clamp(v: number): number {
+  return Math.min(99, Math.max(1, Math.round(v)));
+}
 
 const POS_ATTRS: Record<string, { PAC: number; SHO: number; PAS: number; DRI: number; DEF: number; PHY: number }> = {
   GK:  { PAC: 45, SHO: 15, PAS: 55, DRI: 18, DEF: 88, PHY: 80 },
@@ -51,23 +56,38 @@ function buildPlayersFromSquads(squads: Record<string, SquadList>): Player[] {
         const pos = getPos(section, i);
         const baseAttrs = POS_ATTRS[pos] || POS_ATTRS.MID;
         const scale = (teamRating - 58) / 37;
-        const jitter = ((playerIdx * 7 + 13) % 11) - 5;
-        const ovr = Math.min(95, Math.max(58, Math.round(58 + scale * 34 + jitter)));
 
-        const attrScale = (ovr - 58) / 37;
-        const attrs = {
-          PAC: Math.min(99, Math.round(baseAttrs.PAC + attrScale * 12 + ((playerIdx * 3) % 7) - 3)),
-          SHO: Math.min(99, Math.round(baseAttrs.SHO + attrScale * 12 + ((playerIdx * 5) % 7) - 3)),
-          PAS: Math.min(99, Math.round(baseAttrs.PAS + attrScale * 10 + ((playerIdx * 2) % 7) - 3)),
-          DRI: Math.min(99, Math.round(baseAttrs.DRI + attrScale * 12 + ((playerIdx * 4) % 7) - 3)),
-          DEF: Math.min(99, Math.round(baseAttrs.DEF + attrScale * 8 + ((playerIdx * 6) % 7) - 3)),
-          PHY: Math.min(99, Math.round(baseAttrs.PHY + attrScale * 8 + ((playerIdx * 1) % 7) - 3)),
-        };
+        const override = PLAYER_STATS_OVERRIDE[sp.id];
+
+        let attrs: { PAC: number; SHO: number; PAS: number; DRI: number; DEF: number; PHY: number };
+        let ovr: number;
+
+        if (override) {
+          const [pac, sho, pas, dri, def, phy] = override;
+          attrs = { PAC: pac, SHO: sho, PAS: pas, DRI: dri, DEF: def, PHY: phy };
+          ovr = Math.round((pac + sho + pas + dri + def + phy) / 6);
+        } else {
+          const nameHash = sp.name.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+          const jitter = (Math.abs(nameHash) % 17) - 8;
+          ovr = Math.min(95, Math.max(58, Math.round(58 + scale * 34 + jitter)));
+
+          const attrScale = (ovr - 58) / 37;
+          const absHash = Math.abs(nameHash);
+          attrs = {
+            PAC: clamp(baseAttrs.PAC + attrScale * 12 + ((absHash >> 0) % 7) - 3),
+            SHO: clamp(baseAttrs.SHO + attrScale * 12 + ((absHash >> 3) % 7) - 3),
+            PAS: clamp(baseAttrs.PAS + attrScale * 10 + ((absHash >> 6) % 7) - 3),
+            DRI: clamp(baseAttrs.DRI + attrScale * 12 + ((absHash >> 9) % 7) - 3),
+            DEF: clamp(baseAttrs.DEF + attrScale * 8 + ((absHash >> 12) % 7) - 3),
+            PHY: clamp(baseAttrs.PHY + attrScale * 8 + ((absHash >> 15) % 7) - 3),
+          };
+        }
 
         const form = forms[playerIdx % forms.length];
         const goals = pos === 'GK' ? 0 : pos.includes('B') || pos === 'CDM' ? ((playerIdx % 3 === 0) ? 1 : 0) : Math.floor(Math.random() * 4);
         const assists = pos === 'GK' ? 0 : Math.floor(Math.random() * 3);
-        const rating = Number((6.0 + scale * 2.5 + (jitter * 0.1)).toFixed(1));
+        const ratingJitter = override ? (ovr - 65) * 0.05 : ((Math.abs(sp.name.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0)) % 17) - 8) * 0.1;
+        const rating = Number((6.0 + scale * 2.5 + ratingJitter).toFixed(1));
 
         const heatmap = pos === 'GK'
           ? { ATK: 2, MID: 5, DEF: 95, WID: 5 }

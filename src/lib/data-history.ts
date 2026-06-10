@@ -9,7 +9,7 @@ export const TOURNAMENT_HISTORY: TournamentHistoryEntry[] = [
     runnerUp: { name: 'France', flag: '🇫🇷', id: 'FRA' },
     finalScore: '3-3 (4-2 pens)',
     topPlayers: [
-      { name: 'Kylian Mbappé', flag: '🇫🇷', team: 'France', goals: 8, assists: 2, rating: 8.7 },
+      { name: 'Kylian Mbappé', flag: '🇫🇷', team: 'France', goals: 4, assists: 2, rating: 8.7 },
       { name: 'Lionel Messi', flag: '🇦🇷', team: 'Argentina', goals: 7, assists: 3, rating: 9.1 },
       { name: 'Olivier Giroud', flag: '🇫🇷', team: 'France', goals: 4, assists: 0, rating: 7.4 },
       { name: 'Julián Álvarez', flag: '🇦🇷', team: 'Argentina', goals: 4, assists: 1, rating: 7.9 },
@@ -119,8 +119,8 @@ export const TOURNAMENT_HISTORY: TournamentHistoryEntry[] = [
       { name: 'Ronaldo', flag: '🇧🇷', team: 'Brazil', goals: 8, assists: 0, rating: 8.9 },
       { name: 'Miroslav Klose', flag: '🇩🇪', team: 'Germany', goals: 5, assists: 1, rating: 7.8 },
       { name: 'Rivaldo', flag: '🇧🇷', team: 'Brazil', goals: 5, assists: 2, rating: 8.4 },
-      { name: 'Jon Dahl Tomasson', flag: '🇩🇰', team: 'Denmark', goals: 4, assists: 0, rating: 7.4 },
-      { name: 'Robbie Keane', flag: '🇮🇪', team: 'Ireland', goals: 3, assists: 1, rating: 7.3 },
+      { name: 'Vieri', flag: '🇮🇹', team: 'Italy', goals: 4, assists: 0, rating: 7.8 },
+      { name: 'Ballack', flag: '🇩🇪', team: 'Germany', goals: 3, assists: 2, rating: 8.0 },
     ],
     topTeams: [
       { id: 'BRA', name: 'Brazil', flag: '🇧🇷', avgRating: 90, goalsScored: 18, goalsConceded: 4, bigChances: 25 },
