@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { TOURNAMENT_HISTORY } from '@/lib/data';
+import { TOURNAMENT_HISTORY, ALL_TIME_TOP_SCORERS } from '@/lib/data';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import type { TournamentHistoryEntry, TournamentHistoryTeam } from '@/lib/data';
 
@@ -185,6 +185,35 @@ function YearContent({ entry }: { entry: TournamentHistoryEntry }) {
   );
 }
 
+const TEAM_FLAGS: Record<string, string> = {
+  GER: '🇩🇪', BRA: '🇧🇷', FRA: '🇫🇷', ARG: '🇦🇷', HUN: '🇭🇺',
+};
+
+const RECORDS = [
+  { label: 'Most titles', value: 'Brazil (5)', icon: '🏆' },
+  { label: 'Most goals (nation)', value: 'Brazil — 237', icon: '⚽' },
+  { label: 'Most goals (single WC)', value: 'Fontaine — 13 in 1958', icon: '🔥' },
+  { label: 'Biggest final win', value: 'Brazil 5–2 Sweden 1958', icon: '💥' },
+  { label: 'Most WC appearances', value: 'Brazil (22, every tournament)', icon: '🌍' },
+  { label: 'Fastest goal', value: 'Hakan Şükür — 10.8s (2002)', icon: '⚡' },
+];
+
+function RecordsStrip() {
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+      {RECORDS.map(r => (
+        <div key={r.label} className="shrink-0 w-44 bg-dark-surface border border-dark-border rounded-xl p-3 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{r.icon}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">{r.label}</span>
+          </div>
+          <span className="text-sm font-semibold text-dark-text-primary leading-tight">{r.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AllTimeContent() {
   const [sortKey, setSortKey] = useState<SortKey>('goals');
   const { containerRef, getRevealProps } = useScrollReveal<HTMLDivElement>({ staggerDelay: 100 });
@@ -217,7 +246,11 @@ function AllTimeContent() {
 
   return (
     <div ref={containerRef} className="space-y-3">
-      <div {...getRevealProps(0)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+      <div {...getRevealProps(0)}>
+        <RecordsStrip />
+      </div>
+
+      <div {...getRevealProps(1)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
         <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Champions Roll</h3>
         </div>
@@ -236,9 +269,36 @@ function AllTimeContent() {
         </div>
       </div>
 
-      <div {...getRevealProps(1)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+      <div {...getRevealProps(2)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+        <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">All-Time Top Scorers</h3>
+          <p className="text-[10px] text-dark-text-muted mt-0.5">Since 1930</p>
+        </div>
+        <div className="divide-y divide-dark-border/50">
+          {ALL_TIME_TOP_SCORERS.map((p, idx) => (
+            <div key={p.name} className="flex items-center gap-3 px-4 py-3">
+              <span className="text-sm font-bold text-dark-text-muted tabular-nums w-5 text-center shrink-0">{idx + 1}</span>
+              <div className="w-8 h-8 rounded-full bg-dark-border flex items-center justify-center shrink-0">
+                <span className="text-lg">{TEAM_FLAGS[p.team] ?? '🏳️'}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-dark-text-primary truncate">{p.name}</p>
+                <p className="text-[11px] text-dark-text-muted">{p.team} · {p.tournaments}</p>
+              </div>
+              <span className="text-xs font-bold px-2 py-1 rounded-md tabular-nums bg-blue-600 text-white">
+                {p.goals}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div {...getRevealProps(3)} className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
         <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">All-Time Top Players</h3>
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Top Performers 2002–2022</h3>
+            <p className="text-[10px] text-dark-text-muted mt-0.5">From the last 6 tournaments</p>
+          </div>
           <div className="flex gap-1">
             {(['goals', 'assists', 'rating'] as const).map(k => (
               <button key={k} type="button" onClick={() => setSortKey(k)}

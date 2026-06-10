@@ -6,6 +6,7 @@ import { MOCK_GROUPS } from '@/lib/data';
 import { computeStandings, defaultResults } from '@/lib/qualification-calc';
 import type { MatchResult, Result } from '@/lib/qualification-calc';
 import type { Match, StandingRow, Group } from '@/types';
+import { useUserPreferencesStore } from '@/lib/store';
 import ChaosMode from './ChaosMode';
 
 type StandingsMode = 'short' | 'full';
@@ -237,12 +238,24 @@ function GroupSection({ group, mode, onModeChange }: { group: Group; mode: Stand
 }
 
 export default function IfThisHappens() {
-  const [activeGroupIdx, setActiveGroupIdx] = useState(0);
+  const favoriteTeamId = useUserPreferencesStore(s => s.favoriteTeamId);
+  const fanMode = useUserPreferencesStore(s => s.fanMode);
+
+  const defaultGroupIdx = useMemo(() => {
+    if (favoriteTeamId && favoriteTeamId !== 'skipped') {
+      const idx = MOCK_GROUPS.findIndex(g => g.teams.some(t => t.id === favoriteTeamId));
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  }, [favoriteTeamId]);
+
+  const [activeGroupIdx, setActiveGroupIdx] = useState(defaultGroupIdx);
   const [mode, setMode] = useState<StandingsMode>('short');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    useUserPreferencesStore.persist.rehydrate();
     const saved = localStorage.getItem(STORAGE_KEY) as StandingsMode | null;
     if (saved === 'short' || saved === 'full') {
       setMode(saved);
@@ -272,6 +285,11 @@ export default function IfThisHappens() {
         <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Group stage simulator</p>
         <h1 className="text-xl font-semibold text-dark-text-primary">If This Happens...</h1>
         <p className="text-xs text-dark-text-muted mt-1">Toggle match results. Watch the table change.</p>
+        {fanMode === 'new' && (
+          <p className="text-[11px] text-dark-accent/80 mt-1">
+            Tap a result for each match to see how the group table changes.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">

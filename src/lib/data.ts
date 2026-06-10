@@ -1,4 +1,4 @@
-import type { Team, TeamStats, Player, SquadList, Stadium, Group, Match, TimelineDay } from '@/types';
+import type { Team, Player, SquadList, Stadium, Group, Match, TimelineDay } from '@/types';
 import { TEAMS_AF } from './data-teams-af';
 import { TEAMS_GL } from './data-teams-gl';
 import { SQUADS_TOP12 } from './data-squads-top12';
@@ -95,26 +95,10 @@ export function getPlayers(): Player[] {
 
 export const PLAYERS: Player[] = buildPlayers();
 
-const _TEAM_STATS: Record<string, TeamStats> = {};
-for (const t of TEAMS) {
-  const teamPlayers = PLAYERS.filter(p => p.teamId === t.id);
-  const totalGoals = teamPlayers.reduce((s, p) => s + p.wcStats.goals, 0);
-  _TEAM_STATS[t.id] = {
-    goalsFor: Math.max(totalGoals, 3 + Math.floor(Math.random() * 8)),
-    goalsAgainst: 1 + Math.floor(Math.random() * 5),
-    cleanSheets: Math.floor(Math.random() * 3),
-    yellowCards: 3 + Math.floor(Math.random() * 8),
-    redCards: Math.floor(Math.random() * 2),
-    goalsByType: {
-      openPlay: 2 + Math.floor(Math.random() * 5),
-      setPiece: 1 + Math.floor(Math.random() * 3),
-      freeKick: Math.floor(Math.random() * 2),
-      penalty: Math.floor(Math.random() * 2),
-      ownGoal: Math.floor(Math.random() * 1),
-    },
-  };
-}
-TEAMS.forEach(t => { t.teamStats = _TEAM_STATS[t.id]; });
+// teamStats is intentionally unset pre-tournament.
+// When real match data flows (via API-Football), populate team.teamStats
+// from the live API response so the Stats tab switches from the
+// pre-tournament empty state to match-derived stats automatically.
 
 const _GROUP_OPPONENTS: Record<string, string[]> = {
   MEX: ['KOR','RSA','CZE'], KOR: ['MEX','RSA','CZE'], RSA: ['MEX','KOR','CZE'], CZE: ['MEX','KOR','RSA'],
@@ -286,7 +270,8 @@ export interface TournamentHistoryPlayer { name: string; flag: string; team: str
 export interface TournamentHistoryTeam { id: string; name: string; flag: string; avgRating: number; goalsScored: number; goalsConceded: number; bigChances: number; }
 export interface TournamentHistoryEntry { year: number; host: string; hostFlag: string; winner: { name: string; flag: string; id: string }; runnerUp: { name: string; flag: string; id: string }; finalScore: string; topPlayers: TournamentHistoryPlayer[]; topTeams: TournamentHistoryTeam[]; }
 
-export { TOURNAMENT_HISTORY } from './data-history';
+export { TOURNAMENT_HISTORY, ALL_TIME_TOP_SCORERS } from './data-history';
+export type { AllTimeTopScorer } from './data-history';
 
 export const FAN_IQ_LEVELS = [
   { level: 'Casual Fan', min: 0, max: 20 },

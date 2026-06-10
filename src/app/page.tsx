@@ -6,9 +6,13 @@ import useSWR from 'swr';
 import LiveScoreTicker from '@/components/ui/LiveScoreTicker';
 import DailyPredictionWidget from '@/components/ui/DailyPredictionWidget';
 import StreakNudgeBanner from '@/components/ui/StreakNudgeBanner';
+import FeatureShowcase from '@/components/home/FeatureShowcase';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
-import { useBracketStore } from '@/lib/store';
+import { useBracketStore, useUserPreferencesStore } from '@/lib/store';
+import { TEAMS, MOCK_GROUPS } from '@/lib/data';
 import type { BracketState } from '@/types';
+
+/* ─── Last Updated ──────────────────────────────────────── */
 
 function LastUpdated() {
   const { lastUpdated } = useLiveMatches();
@@ -35,6 +39,8 @@ function LastUpdated() {
     </p>
   );
 }
+
+/* ─── Next Match Countdown ──────────────────────────────── */
 
 function NextMatchCountdown() {
   const { matches } = useLiveMatches();
@@ -88,6 +94,99 @@ function NextMatchCountdown() {
     </div>
   );
 }
+
+/* ─── Your Team ─────────────────────────────────────────── */
+
+function YourTeamCard() {
+  const favoriteTeamId = useUserPreferencesStore(s => s.favoriteTeamId);
+  const champion = useBracketStore(s => s.bracket.final[0]?.winner);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    useUserPreferencesStore.persist.rehydrate();
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const hasFavTeam = favoriteTeamId && favoriteTeamId !== 'skipped';
+  const team = hasFavTeam ? TEAMS.find(t => t.id === favoriteTeamId) : null;
+  const group = team ? MOCK_GROUPS.find(g => g.teams.some(t => t.id === team.id)) : null;
+  const nextFixture = group
+    ? group.matches.find(m => m.status === 'NS' && (m.homeTeam.id === team!.id || m.awayTeam.id === team!.id))
+    : null;
+
+  if (team && group) {
+    return (
+      <div className="mb-4 bg-dark-surface border border-dark-accent/30 rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-4">
+          <span className="text-4xl">{team.flag}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-dark-accent/70 mb-0.5">
+              Your team
+            </p>
+            <p className="text-base font-bold text-dark-text-primary truncate">{team.name}</p>
+          </div>
+          <Link
+            href={`/teams/${team.id}`}
+            className="shrink-0 text-xs text-dark-accent font-medium hover:text-dark-accent-hover transition-colors"
+          >
+            Profile →
+          </Link>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <span className="bg-dark-bg text-dark-text-muted text-[11px] font-medium px-2.5 py-1 rounded-lg">
+            Group {group.id}
+          </span>
+          <span className="bg-dark-bg text-dark-text-muted text-[11px] font-medium px-2.5 py-1 rounded-lg">
+            Rank #{team.rank}
+          </span>
+        </div>
+
+        {nextFixture && (
+          <div className="bg-dark-bg rounded-lg p-3 flex items-center gap-2">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted">Next:</span>
+            <span className="text-sm text-dark-text-primary font-medium">
+              {nextFixture.homeTeam.flag} {nextFixture.homeTeam.name} vs {nextFixture.awayTeam.name} {nextFixture.awayTeam.flag}
+            </span>
+          </div>
+        )}
+
+        <Link
+          href={`/groups?team=${team.id}`}
+          className="block text-center text-xs text-dark-accent font-medium hover:text-dark-accent-hover transition-colors py-1"
+        >
+          Check qualification scenarios →
+        </Link>
+      </div>
+    );
+  }
+
+  if (!champion) return null;
+
+  return (
+    <div className="mb-4 bg-dark-surface border border-dark-accent/30 rounded-xl p-4 flex items-center gap-4">
+      <span className="text-4xl">{champion.flag}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-accent/70 mb-0.5">
+          Your pick to bring it home
+        </p>
+        <p className="text-base font-bold text-dark-text-primary truncate">
+          {champion.name}
+        </p>
+      </div>
+      <Link
+        href="/bracket"
+        className="shrink-0 text-xs text-dark-accent font-medium hover:text-dark-accent-hover transition-colors"
+      >
+        View bracket →
+      </Link>
+    </div>
+  );
+}
+
+/* ─── Bracket Snapshot ──────────────────────────────────── */
 
 function BracketSnapshot() {
   const bracket = useBracketStore(s => s.bracket);
@@ -152,6 +251,8 @@ function BracketSnapshot() {
   );
 }
 
+/* ─── Glory Index Preview ───────────────────────────────── */
+
 function GloryIndexPreview() {
   const TOP_TEAMS = [
     { flag: '🇫🇷', name: 'France', score: '100.0' },
@@ -185,6 +286,8 @@ function GloryIndexPreview() {
     </div>
   );
 }
+
+/* ─── History Teaser ────────────────────────────────────── */
 
 const HISTORY_FACTS = [
   'Brazil has won the World Cup 5 times — more than any nation.',
@@ -222,6 +325,8 @@ function HistoryTeaser() {
     </div>
   );
 }
+
+/* ─── Latest News ───────────────────────────────────────── */
 
 interface NewsArticle {
   title: string;
@@ -297,14 +402,16 @@ function LatestNews() {
   );
 }
 
+/* ─── Home Page ──────────────────────────────────────────── */
+
 export default function Home() {
   return (
     <div>
-      {/* Live score ticker */}
+      {/* 1. Live score ticker */}
       <LiveScoreTicker />
       <LastUpdated />
 
-      {/* Hero */}
+      {/* 2. Hero */}
       <div className="mb-8 pt-2">
         <p className="text-xs font-medium uppercase tracking-widest text-dark-accent/70 mb-4">
           FIFA World Cup 2026 · USA · Canada · Mexico
@@ -326,23 +433,33 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Streak nudge banner */}
+      {/* 3. Your team (only when champion is picked) */}
+      <YourTeamCard />
+
+      {/* 4. Streak nudge */}
       <StreakNudgeBanner />
 
-      {/* Daily Prediction Widget */}
+      {/* 5. Daily prediction */}
       <DailyPredictionWidget />
 
-      {/* Next match countdown (when no live matches) */}
+      {/* 6. Match status strip / countdown */}
       <NextMatchCountdown />
 
-      {/* Dynamic feed widgets */}
+      {/* 7. Feature showcase — the main draw */}
+      <FeatureShowcase />
+
+      {/* 8. Bracket progress + Glory Index top 3 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <BracketSnapshot />
         <GloryIndexPreview />
+      </div>
+
+      {/* 9. Did you know */}
+      <div className="mb-6">
         <HistoryTeaser />
       </div>
 
-      {/* News Feed */}
+      {/* 10. News feed */}
       <LatestNews />
     </div>
   );

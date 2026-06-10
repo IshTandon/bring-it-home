@@ -186,6 +186,30 @@ export function useBracketActions() {
   );
 }
 
+// ─── User Preferences Store ──────────────────────────────
+export type FanMode = 'new' | 'diehard' | null;
+
+interface UserPreferencesStore {
+  favoriteTeamId: string | null;
+  fanMode: FanMode;
+  setFavoriteTeam: (teamId: string | null) => void;
+  setFanMode: (mode: FanMode) => void;
+  resetPreferences: () => void;
+}
+
+export const useUserPreferencesStore = create<UserPreferencesStore>()(
+  persist(
+    (set) => ({
+      favoriteTeamId: null,
+      fanMode: null,
+      setFavoriteTeam: (teamId) => set({ favoriteTeamId: teamId }),
+      setFanMode: (mode) => set({ fanMode: mode }),
+      resetPreferences: () => set({ favoriteTeamId: null, fanMode: null }),
+    }),
+    { name: 'wc2026-user-prefs', skipHydration: true }
+  )
+);
+
 // ─── Predictions Store ────────────────────────────────────
 interface PredictionStore {
   predictions: Prediction[];

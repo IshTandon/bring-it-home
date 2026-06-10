@@ -2,6 +2,21 @@ interface TournamentHistoryPlayer { name: string; flag: string; team: string; go
 interface TournamentHistoryTeam { id: string; name: string; flag: string; avgRating: number; goalsScored: number; goalsConceded: number; bigChances: number; }
 interface TournamentHistoryEntry { year: number; host: string; hostFlag: string; winner: { name: string; flag: string; id: string }; runnerUp: { name: string; flag: string; id: string }; finalScore: string; topPlayers: TournamentHistoryPlayer[]; topTeams: TournamentHistoryTeam[]; }
 
+export interface AllTimeTopScorer { name: string; team: string; goals: number; tournaments: string; }
+
+export const ALL_TIME_TOP_SCORERS: AllTimeTopScorer[] = [
+  { name: 'Miroslav Klose', team: 'GER', goals: 16, tournaments: '2002–2014' },
+  { name: 'Ronaldo', team: 'BRA', goals: 15, tournaments: '1998–2006' },
+  { name: 'Gerd Müller', team: 'GER', goals: 14, tournaments: '1970–1974' },
+  { name: 'Lionel Messi', team: 'ARG', goals: 13, tournaments: '2006–2022' },
+  { name: 'Just Fontaine', team: 'FRA', goals: 13, tournaments: '1958' },
+  { name: 'Pelé', team: 'BRA', goals: 12, tournaments: '1958–1970' },
+  { name: 'Kylian Mbappé', team: 'FRA', goals: 12, tournaments: '2018–2022' },
+  { name: 'Sándor Kocsis', team: 'HUN', goals: 11, tournaments: '1954' },
+  { name: 'Jürgen Klinsmann', team: 'GER', goals: 11, tournaments: '1990–1998' },
+  { name: 'Thomas Müller', team: 'GER', goals: 10, tournaments: '2010–2014' },
+];
+
 export const TOURNAMENT_HISTORY: TournamentHistoryEntry[] = [
   {
     year: 2022, host: 'Qatar', hostFlag: '🇶🇦',

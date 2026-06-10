@@ -8,6 +8,7 @@ import type { MatchResult, Result } from '@/lib/qualification-calc';
 import { computeStandings } from '@/lib/qualification-calc';
 import { generateChaosScenario, findDramaticScenario } from '@/lib/chaos-engine';
 import type { ChaosScenario } from '@/lib/chaos-engine';
+import { useUserPreferencesStore } from '@/lib/store';
 import EliminationBanner from './EliminationBanner';
 
 const FINISHED = new Set(['FT', 'AET', 'PEN']);
@@ -40,8 +41,19 @@ function standingRowClass(
 }
 
 export default function ChaosMode({ group }: { group: Group }) {
+  const favoriteTeamId = useUserPreferencesStore(s => s.favoriteTeamId);
+  const fanMode = useUserPreferencesStore(s => s.fanMode);
+
+  const defaultTeam = useMemo(() => {
+    if (favoriteTeamId && favoriteTeamId !== 'skipped') {
+      const inGroup = group.teams.some(t => t.id === favoriteTeamId);
+      if (inGroup) return favoriteTeamId;
+    }
+    return null;
+  }, [favoriteTeamId, group]);
+
   const [scenario, setScenario] = useState<ChaosScenario | null>(null);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(defaultTeam);
   const [rollCount, setRollCount] = useState(0);
   const [animKey, setAnimKey] = useState(0);
 
@@ -113,6 +125,11 @@ export default function ChaosMode({ group }: { group: Group }) {
       <div>
         <h2 className="text-base font-semibold text-dark-text-primary">🌀 Chaos Mode</h2>
         <p className="text-xs text-dark-text-muted">Spin a random future for this group</p>
+        {fanMode === 'new' && (
+          <p className="text-[11px] text-dark-accent/80 mt-1">
+            Every tap simulates one possible ending to the group.
+          </p>
+        )}
       </div>
 
       {/* Actions */}

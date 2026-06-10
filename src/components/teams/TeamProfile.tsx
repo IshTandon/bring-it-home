@@ -371,20 +371,150 @@ function AttackBar({ label, value, total, color, scorers }: {
   );
 }
 
+const TOP_5_LEAGUE_CLUBS = new Set([
+  'Arsenal', 'Chelsea', 'Liverpool', 'Manchester City', 'Manchester United',
+  'Tottenham', 'Newcastle', 'West Ham', 'Aston Villa', 'Brighton',
+  'Crystal Palace', 'Wolves', 'Bournemouth', 'Fulham', 'Brentford',
+  'Nottingham Forest', 'Nottm Forest', 'Everton', 'Leicester', 'Southampton',
+  'Barcelona', 'Real Madrid', 'Atletico Madrid', 'Real Sociedad', 'Real Betis',
+  'Villarreal', 'Athletic Bilbao', 'Sevilla', 'Valencia', 'Girona', 'Getafe',
+  'Celta Vigo', 'Mallorca', 'Osasuna', 'Espanyol', 'Rayo Vallecano',
+  'Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen',
+  'Eintracht Frankfurt', 'Wolfsburg', 'Freiburg', 'Stuttgart',
+  'Borussia Mönchengladbach', 'Hoffenheim', 'Mainz', 'Werder Bremen', 'Union Berlin',
+  'AC Milan', 'Inter Milan', 'Juventus', 'Napoli', 'Roma', 'Lazio',
+  'Atalanta', 'Fiorentina', 'Bologna', 'Torino', 'Monza', 'Udinese',
+  'Cagliari', 'Genoa', 'Lecce', 'Empoli',
+  'PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice', 'Rennes',
+  'Montpellier', 'Lens', 'Strasbourg', 'Nantes', 'Toulouse', 'Brest', 'Reims',
+]);
+
+function TopRatedRow({ player }: { player: Player }) {
+  const [imgErr, setImgErr] = useState(false);
+  const photoUrl = player.apiId
+    ? `https://media.api-sports.io/football/players/${player.apiId}.png`
+    : player.photoUrl;
+  const hasPhoto = photoUrl && !imgErr;
+
+  const attrEntries = Object.entries(player.attrs) as [keyof Player['attrs'], number][];
+  const topAttrs = [...attrEntries].sort((a, b) => b[1] - a[1]).slice(0, 2);
+
+  return (
+    <Link href={`/players?highlight=${player.id}`}
+      className="flex items-center gap-3 px-4 py-3 active:bg-dark-border/30 transition-colors">
+      {hasPhoto ? (
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-dark-border shrink-0">
+          <Image src={photoUrl} alt={player.name} width={36} height={36}
+            className="object-cover w-full h-full" onError={() => setImgErr(true)} unoptimized />
+        </div>
+      ) : (
+        <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
+          <FallbackSilhouette size={36} />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-dark-text-primary truncate">{player.name}</p>
+        <p className="text-[10px] text-dark-text-muted">{player.pos}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="flex gap-1.5">
+          {topAttrs.map(([attr, val]) => (
+            <span key={attr} className="bg-dark-accent/15 text-dark-accent text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums">
+              {attr} {val}
+            </span>
+          ))}
+        </div>
+        <span className="text-sm font-bold text-dark-text-primary tabular-nums w-7 text-right">
+          {player.ovr}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function PreTournamentStats({ team }: { team: Team }) {
+  const squads = team.squads;
+  const allSquadPlayers = squads
+    ? [...squads.gk, ...squads.def, ...squads.mid, ...squads.fwd]
+    : [];
+  const squadSize = allSquadPlayers.length;
+  const avgAge = squadSize > 0
+    ? (allSquadPlayers.reduce((s, p) => s + p.age, 0) / squadSize).toFixed(1)
+    : '–';
+  const top5Count = allSquadPlayers.filter(p => TOP_5_LEAGUE_CLUBS.has(p.club)).length;
+
+  const teamPlayers = PLAYERS.filter(p => p.teamId === team.id);
+  const topRated = [...teamPlayers].sort((a, b) => b.ovr - a.ovr).slice(0, 3);
+
+  return (
+    <div className="space-y-3">
+      <div className="text-center py-6">
+        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-dark-accent/10 border border-dark-accent/20 flex items-center justify-center">
+          <svg className="w-6 h-6 text-dark-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </div>
+        <h3 className="text-sm font-semibold text-dark-text-primary mb-1">Tournament starts June 11</h3>
+        <p className="text-xs text-dark-text-muted">Match stats appear after the first whistle.</p>
+      </div>
+
+      {squadSize > 0 && (
+        <>
+          <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+            <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Squad snapshot</h3>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-dark-border/50">
+              <div className="p-3 text-center">
+                <p className="text-xl font-bold text-dark-text-primary tabular-nums">{squadSize}</p>
+                <p className="text-[10px] text-dark-text-muted font-medium mt-0.5">Players</p>
+              </div>
+              <div className="p-3 text-center">
+                <p className="text-xl font-bold text-dark-text-primary tabular-nums">{avgAge}</p>
+                <p className="text-[10px] text-dark-text-muted font-medium mt-0.5">Avg age</p>
+              </div>
+              <div className="p-3 text-center">
+                <p className="text-xl font-bold text-dark-text-primary tabular-nums">{top5Count}</p>
+                <p className="text-[10px] text-dark-text-muted font-medium mt-0.5">Top-5 leagues</p>
+              </div>
+            </div>
+          </div>
+
+          {topRated.length > 0 && (
+            <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden">
+              <div className="px-4 py-2.5 bg-dark-border/30 border-b border-dark-border">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-dark-text-muted">Highest rated</h3>
+              </div>
+              <div className="divide-y divide-dark-border/50">
+                {topRated.map(p => <TopRatedRow key={p.id} player={p} />)}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Placeholder slots — replaced by real match stats post-tournament */}
+      <div className="grid grid-cols-4 gap-2 opacity-25 pointer-events-none">
+        {['Played', 'Scored', 'Conceded', 'GD'].map(label => (
+          <div key={label} className="bg-dark-surface border border-dark-border rounded-xl p-3 text-center">
+            <p className="text-xl font-bold text-dark-text-primary tabular-nums">–</p>
+            <p className="text-[10px] text-dark-text-muted font-medium mt-0.5">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function StatsTab({ team }: { team: Team }) {
   const stats = team.teamStats;
 
+  // Pre-tournament: no real match data yet
   if (!stats) {
-    return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center">
-          <span className="text-2xl">📊</span>
-        </div>
-        <p className="text-dark-text-muted text-sm">Stats will be available once the tournament begins.</p>
-      </div>
-    );
+    return <PreTournamentStats team={team} />;
   }
 
+  // ── Post-tournament: real match-derived stats ──
   const gd = stats.goalsFor - stats.goalsAgainst;
   const matchesPlayed = 3;
   const avgGoals = (stats.goalsFor / matchesPlayed).toFixed(1);

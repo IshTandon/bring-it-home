@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { getQualificationStatus } from '@/lib/qualification-calc';
 import type { MatchResult } from '@/lib/qualification-calc';
 import type { Group, Match } from '@/types';
+import { useUserPreferencesStore } from '@/lib/store';
 
 interface QualificationCheckProps {
   teamId: string;
@@ -98,6 +99,7 @@ export default function QualificationCheck({
   playedResults,
   remainingMatches,
 }: QualificationCheckProps) {
+  const fanMode = useUserPreferencesStore(s => s.fanMode);
   const team = group.teams.find(t => t.id === teamId);
   const teamName = team ? team.name : teamId;
 
@@ -112,6 +114,11 @@ export default function QualificationCheck({
       <h3 className="text-sm font-semibold text-dark-text-primary">
         Can {teamName} still qualify?
       </h3>
+      {fanMode === 'new' && (
+        <p className="text-[11px] text-dark-accent/80 -mt-2">
+          Top 2 in each group qualify. Third place might sneak through.
+        </p>
+      )}
 
       {/* Big verdict */}
       {status.status === 'qualified' && (

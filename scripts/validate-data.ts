@@ -53,10 +53,10 @@ function stripSquadTs(code: string): string {
 function stripHistoryTs(code: string): string {
   return code
     .replace(/^import\s+.*$/gm, '')
-    .replace(/^interface\s+\w+\s*\{.*\}$/gm, '')
+    .replace(/^(?:export\s+)?interface\s+\w+\s*\{.*\}$/gm, '')
     .replace(/\bexport\s+/g, '')
     .replace(/\bconst\s+/g, 'var ')
-    .replace(/:\s*TournamentHistoryEntry\[\]/g, '')
+    .replace(/:\s*\w+\[\]/g, '')
     .replace(/\/\/.*$/gm, '');
 }
 
@@ -597,6 +597,63 @@ function validateGroups(): void {
 }
 
 // ══════════════════════════════════════════════════════════
+//  6. TOP-12 SQUAD CONSISTENCY
+// ══════════════════════════════════════════════════════════
+
+function validateTop12Consistency(allSquads: Map<string, SquadData>): void {
+  header('6. TOP-12 SQUAD CONSISTENCY (data-squads-top12 vs squads/)');
+
+  const top12Path = path.join(LIB, 'data-squads-top12.ts');
+  const raw = fs.readFileSync(top12Path, 'utf-8');
+
+  const isDerivative = raw.includes("from './squads/");
+  if (isDerivative) {
+    pass('data-squads-top12.ts imports from squads/ (single source of truth)');
+  } else {
+    fail('data-squads-top12.ts contains inline data — should derive from squads/ files');
+  }
+
+  const TOP12_IDS = ['BRA','FRA','ARG','ENG','ESP','GER','POR','NED','BEL','MAR','CRO','URU'];
+
+  const RETIRED_IDS = [
+    'griezmann', 'di-maria', 'gundogan', 'kroos', 'busquets',
+    'hazard', 'lloris', 'benzema',
+  ];
+
+  let retiredFound = false;
+  let dupeNumsFound = false;
+
+  for (const teamId of TOP12_IDS) {
+    const squad = allSquads.get(teamId);
+    if (!squad) {
+      fail(`${teamId}: Squad file missing — expected in top-12`);
+      continue;
+    }
+
+    const all: SquadPlayer[] = [...squad.gk, ...squad.def, ...squad.mid, ...squad.fwd];
+
+    for (const p of all) {
+      if (RETIRED_IDS.includes(p.id)) {
+        fail(`${teamId}: Retired player "${p.name}" (${p.id}) still in squad`);
+        retiredFound = true;
+      }
+    }
+
+    const nums = all.map(p => p.number);
+    const dupeNums = nums.filter((n, i) => nums.indexOf(n) !== i);
+    if (dupeNums.length > 0) {
+      fail(`${teamId}: Duplicate jersey numbers in top-12 squad — ${Array.from(new Set(dupeNums)).join(', ')}`);
+      dupeNumsFound = true;
+    }
+  }
+
+  if (!retiredFound) pass('No retired players found in top-12 squads');
+  if (!dupeNumsFound) pass('No duplicate jersey numbers in top-12 squads');
+
+  pass(`Top-12 consistency checks complete for ${TOP12_IDS.length} teams`);
+}
+
+// ══════════════════════════════════════════════════════════
 //  MAIN
 // ══════════════════════════════════════════════════════════
 
@@ -609,6 +666,7 @@ validateHistory();
 validateStadiums();
 validatePlayerStats(allSquads);
 validateGroups();
+validateTop12Consistency(allSquads);
 
 // ── Summary ──────────────────────────────────────────────
 

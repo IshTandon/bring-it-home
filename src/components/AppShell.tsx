@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import SplashScreen from './SplashScreen';
 import OnboardingOverlay from './OnboardingOverlay';
+import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import StreakBadge from '@/components/ui/StreakBadge';
 
 const ACTIVE_COLOR = '#f59e0b';
@@ -22,6 +23,7 @@ const NAV_LINKS = [
   { href: '/history',  label: 'World Cup History', icon: '📜' },
   { href: '/wrapped',  label: 'WC Wrapped',       icon: '🎁' },
   { href: '/news',     label: 'News',             icon: '📡' },
+  { href: '/settings', label: 'Settings',         icon: '⚙️' },
 ];
 
 const DESKTOP_NAV = [
@@ -92,6 +94,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <OnboardingOverlay />
+      <WelcomeFlow />
 
       {/* Top nav bar */}
       <nav className="sticky top-0 z-50 border-b border-dark-border px-4 py-2.5"

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { MOCK_GROUPS } from '@/lib/data';
+import { useUserPreferencesStore } from '@/lib/store';
 import QualificationCheck from '@/components/groups/QualificationCheck';
 import type { MatchResult } from '@/lib/qualification-calc';
 
@@ -39,8 +41,25 @@ const IfThisHappens = dynamic(() => import('@/components/groups/IfThisHappens'),
 });
 
 function QualificationPanel() {
-  const [groupIdx, setGroupIdx] = useState(0);
-  const [selectedTeamId, setSelectedTeamId] = useState(MOCK_GROUPS[0].teams[0].id);
+  const searchParams = useSearchParams();
+  const favoriteTeamId = useUserPreferencesStore(s => s.favoriteTeamId);
+
+  const initialState = useMemo(() => {
+    const urlTeam = searchParams.get('team');
+    const targetId = urlTeam || (favoriteTeamId && favoriteTeamId !== 'skipped' ? favoriteTeamId : null);
+    if (targetId) {
+      const gIdx = MOCK_GROUPS.findIndex(g => g.teams.some(t => t.id === targetId));
+      if (gIdx !== -1) return { groupIdx: gIdx, teamId: targetId };
+    }
+    return { groupIdx: 0, teamId: MOCK_GROUPS[0].teams[0].id };
+  }, [searchParams, favoriteTeamId]);
+
+  const [groupIdx, setGroupIdx] = useState(initialState.groupIdx);
+  const [selectedTeamId, setSelectedTeamId] = useState(initialState.teamId);
+
+  useEffect(() => {
+    useUserPreferencesStore.persist.rehydrate();
+  }, []);
 
   const group = MOCK_GROUPS[groupIdx];
 

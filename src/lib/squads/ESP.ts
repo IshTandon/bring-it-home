@@ -17,8 +17,8 @@ export const SQUAD_ESP: SquadList = {
       { id: 'vivian', name: 'Vivian', number: 3, club: 'Athletic Club', age: 25 },
     ],
     mid: [
-      { id: 'pedri', name: 'Pedri', number: 8, club: 'Barcelona', age: 23 },
-      { id: 'rodri', name: 'Rodri', number: 16, club: 'Man City', age: 29 },
+      { id: 'pedri', name: 'Pedri', number: 8, club: 'Barcelona', age: 23, apiId: 133609 },
+      { id: 'rodri', name: 'Rodri', number: 16, club: 'Man City', age: 29, apiId: 44 },
       { id: 'gavi', name: 'Gavi', number: 6, club: 'Barcelona', age: 22 },
       { id: 'merino', name: 'Merino', number: 5, club: 'Arsenal', age: 28 },
       { id: 'fabian-ruiz', name: 'Fabian Ruiz', number: 10, club: 'PSG', age: 28 },
@@ -27,7 +27,7 @@ export const SQUAD_ESP: SquadList = {
       { id: 'pepelu', name: 'Pepelu', number: 25, club: 'Valencia', age: 26 },
     ],
     fwd: [
-      { id: 'yamal', name: 'Yamal', number: 19, club: 'Barcelona', age: 18 },
+      { id: 'yamal', name: 'Yamal', number: 19, club: 'Barcelona', age: 18, apiId: 386828 },
       { id: 'morata', name: 'Morata', number: 7, club: 'AC Milan', age: 33 },
       { id: 'williams', name: 'Williams', number: 11, club: 'Athletic Club', age: 22 },
       { id: 'dani-olmo', name: 'Dani Olmo', number: 21, club: 'Barcelona', age: 27 },
