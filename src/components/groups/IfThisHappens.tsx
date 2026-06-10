@@ -3,104 +3,20 @@
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { MOCK_GROUPS } from '@/lib/data';
-import type { Match, Team, StandingRow, Group } from '@/types';
+import { computeStandings, defaultResults } from '@/lib/qualification-calc';
+import type { MatchResult, Result } from '@/lib/qualification-calc';
+import type { Match, StandingRow, Group } from '@/types';
+import ChaosMode from './ChaosMode';
 
-type Result = 'home' | 'draw' | 'away';
 type StandingsMode = 'short' | 'full';
 
 const STORAGE_KEY = 'standings-mode';
-
-interface MatchResult {
-  matchId: string;
-  result: Result | null;
-  homeScore: number;
-  awayScore: number;
-}
 
 const RESULT_OPTIONS: { value: Result; label: string; short: string }[] = [
   { value: 'home', label: 'Home win', short: 'H' },
   { value: 'draw', label: 'Draw', short: 'D' },
   { value: 'away', label: 'Away win', short: 'A' },
 ];
-
-function defaultResults(matches: Match[]): MatchResult[] {
-  return matches.map(m => ({
-    matchId: m.id,
-    result: null,
-    homeScore: 0,
-    awayScore: 0,
-  }));
-}
-
-function computeStandings(group: Group, results: MatchResult[]): StandingRow[] {
-  const stats: Record<string, StandingRow> = {};
-
-  group.teams.forEach((team, idx) => {
-    stats[team.id] = {
-      rank: idx + 1, team, played: 0, won: 0, drawn: 0, lost: 0,
-      goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0, qualProb: 0,
-    };
-  });
-
-  group.matches.forEach((match, idx) => {
-    const r = results[idx];
-    if (!r || r.result === null) return;
-
-    const home = stats[match.homeTeam.id];
-    const away = stats[match.awayTeam.id];
-    if (!home || !away) return;
-
-    let hGoals: number, aGoals: number;
-    if (r.result === 'home') {
-      hGoals = 2; aGoals = 0;
-      home.won++; away.lost++;
-      home.points += 3;
-    } else if (r.result === 'draw') {
-      hGoals = 1; aGoals = 1;
-      home.drawn++; away.drawn++;
-      home.points += 1; away.points += 1;
-    } else {
-      hGoals = 0; aGoals = 2;
-      away.won++; home.lost++;
-      away.points += 3;
-    }
-
-    home.played++; away.played++;
-    home.goalsFor += hGoals; home.goalsAgainst += aGoals;
-    away.goalsFor += aGoals; away.goalsAgainst += hGoals;
-    home.goalDiff = home.goalsFor - home.goalsAgainst;
-    away.goalDiff = away.goalsFor - away.goalsAgainst;
-  });
-
-  const rows = Object.values(stats).sort((a, b) =>
-    b.points - a.points || b.goalDiff - a.goalDiff || b.goalsFor - a.goalsFor
-  );
-
-  const decidedCount = results.filter(r => r.result !== null).length;
-  const totalMatches = group.matches.length;
-
-  rows.forEach((row, idx) => {
-    row.rank = idx + 1;
-    if (decidedCount === 0) {
-      row.qualProb = 50;
-    } else if (decidedCount === totalMatches) {
-      row.qualProb = idx < 2 ? 100 : 0;
-    } else {
-      const maxRemainingPts = (totalMatches - decidedCount) * 3;
-      const leader = rows[0]?.points ?? 0;
-      const gap = leader - row.points;
-      const canCatch = maxRemainingPts >= gap;
-      if (idx < 2) {
-        row.qualProb = Math.min(98, 50 + row.points * 8 - idx * 5);
-      } else {
-        row.qualProb = canCatch ? Math.max(2, 50 - gap * 10) : 0;
-      }
-      row.qualProb = Math.max(0, Math.min(100, row.qualProb));
-    }
-  });
-
-  return rows;
-}
 
 function generateInsight(standings: StandingRow[], decidedCount: number, totalMatches: number): string {
   if (decidedCount === 0) return 'Toggle results above to simulate the group.';
@@ -373,6 +289,10 @@ export default function IfThisHappens() {
 
       <GroupSection key={MOCK_GROUPS[activeGroupIdx].id} group={MOCK_GROUPS[activeGroupIdx]}
         mode={mode} onModeChange={handleModeChange} />
+
+      <div className="mt-6 pt-6 border-t border-dark-border/50">
+        <ChaosMode key={`chaos-${MOCK_GROUPS[activeGroupIdx].id}`} group={MOCK_GROUPS[activeGroupIdx]} />
+      </div>
     </div>
   );
 }

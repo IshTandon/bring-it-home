@@ -24,7 +24,7 @@ export const SQUAD_URU: SquadList = {
       { id: 'pellistri', name: 'Pellistri', number: 11, club: 'Man Utd', age: 22 },
       { id: 'canobbio', name: 'Canobbio', number: 18, club: 'Athletico Paranaense', age: 27 },
       { id: 'vecino', name: 'Vecino', number: 24, club: 'Lazio', age: 34 },
-      { id: 'martinez-g', name: 'Martínez', number: 25, club: 'Boca Juniors', age: 24 },
+      { id: 'martinez-g', name: 'Martínez', number: 26, club: 'Boca Juniors', age: 24 },
     ],
     fwd: [
       { id: 'suarez', name: 'Suárez', number: 9, club: 'Inter Miami', age: 39 },

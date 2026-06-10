@@ -24,7 +24,7 @@ export const SQUAD_GER: SquadList = {
       { id: 'gross', name: 'Gross', number: 16, club: 'Dortmund', age: 22 },
       { id: 'can', name: 'Can', number: 20, club: 'Dortmund', age: 32 },
       { id: 'stiller', name: 'Stiller', number: 24, club: 'Stuttgart', age: 23 },
-      { id: 'fuehrich', name: 'Führich', number: 11, club: 'Stuttgart', age: 26 },
+      { id: 'fuehrich', name: 'Führich', number: 15, club: 'Stuttgart', age: 26 },
     ],
     fwd: [
       { id: 'musiala', name: 'Musiala', number: 10, club: 'Bayern Munich', age: 22 },

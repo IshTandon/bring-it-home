@@ -12,7 +12,7 @@ export const SQUAD_MAR: SquadList = {
       { id: 'aguerd', name: 'Aguerd', number: 5, club: 'West Ham', age: 28 },
       { id: 'mazraoui', name: 'Mazraoui', number: 15, club: 'Man Utd', age: 27 },
       { id: 'attiat-allah', name: 'Attiat-Allah', number: 22, club: 'Wydad', age: 28 },
-      { id: 'dari', name: 'Dari', number: 4, club: 'Rennes', age: 25 },
+      { id: 'dari', name: 'Dari', number: 26, club: 'Rennes', age: 25 },
       { id: 'el-yamiq', name: 'El Yamiq', number: 3, club: 'Real Valladolid', age: 33 },
       { id: 'bouchouari', name: 'Bouchouari', number: 14, club: 'Sturm Graz', age: 23 },
     ],

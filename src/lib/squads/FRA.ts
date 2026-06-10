@@ -24,7 +24,7 @@ export const SQUAD_FRA: SquadList = {
       { id: 'zaire-emery', name: 'Zaire-Emery', number: 18, club: 'PSG', age: 19 },
       { id: 'guendouzi', name: 'Guendouzi', number: 15, club: 'Marseille', age: 25 },
       { id: 'chotard', name: 'Chotard', number: 21, club: 'Montpellier', age: 23 },
-      { id: 'kone', name: 'Koné', number: 9, club: 'Borussia Mönchengladbach', age: 23 },
+      { id: 'kone', name: 'Koné', number: 24, club: 'Borussia Mönchengladbach', age: 23 },
     ],
     fwd: [
       { id: 'mbappe', name: 'Mbappé', number: 10, club: 'Real Madrid', age: 27 },
