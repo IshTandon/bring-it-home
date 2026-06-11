@@ -8,6 +8,7 @@ import { STADIUMS } from '@/lib/data';
 import { isMatchLive, isMatchFinished, formatMatchMinute } from '@/lib/matchUtils';
 import { detectCalledIt, saveCalledItMoment } from '@/lib/called-it';
 import MatchMinuteBadge from '@/components/ui/MatchMinuteBadge';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import MyMoments from '@/components/bracket/MyMoments';
 import ICalledItCard from '@/components/bracket/ICalledItCard';
 import type { Team, BracketMatch, BracketState, Stadium, Match, MatchStatus } from '@/types';
@@ -49,11 +50,11 @@ class BracketErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
           </div>
           <h2 className="text-lg font-semibold text-dark-text-primary mb-1">Something went wrong</h2>
           <p className="text-sm text-dark-text-muted mb-6 max-w-xs">
-            The bracket ran into an issue. Reset to start fresh — your picks will be cleared.
+            Something went wrong with your picks. Reset to start fresh — your selections will be cleared.
           </p>
           <button type="button" onClick={this.handleReset}
             className="btn-primary text-sm px-6 py-2.5">
-            Reset bracket
+            Reset picks
           </button>
         </div>
       );
@@ -782,7 +783,7 @@ function BracketInner() {
     try {
       const url = getBracketShareUrl();
       if (navigator.share) {
-        await navigator.share({ title: 'My WC 2026 Bracket', url });
+        await navigator.share({ title: 'My WC 2026 Picks', url });
       } else {
         await navigator.clipboard.writeText(url);
         setToast('Link copied to clipboard!');
@@ -826,6 +827,19 @@ function BracketInner() {
   }, [hydrated, decidedMatches, totalMatches]);
 
   // "I Called It" detection: check bracket picks against finished live matches
+  const [showOnboardingHint, setShowOnboardingHint] = useState(false);
+
+  useEffect(() => {
+    if (decidedMatches === 0 && !localStorage.getItem('bracket-onboarding-dismissed')) {
+      setShowOnboardingHint(true);
+    }
+  }, [decidedMatches]);
+
+  const dismissOnboardingHint = useCallback(() => {
+    setShowOnboardingHint(false);
+    localStorage.setItem('bracket-onboarding-dismissed', '1');
+  }, []);
+
   const [calledItMoment, setCalledItMoment] = useState<import('@/types').CalledItMoment | null>(null);
   const detectedMomentsRef = useRef<Set<string>>(new Set());
 
@@ -891,11 +905,16 @@ function BracketInner() {
     <div>
       {toast && <Toast message={toast} />}
 
+      <FeatureExplainer
+        featureId="bracket-intro"
+        text="Who wins each knockout match? Make your calls from the Round of 32 to the Final."
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Knockout stage</p>
-          <h1 className="text-xl font-semibold text-dark-text-primary">Build your bracket</h1>
+          <h1 className="text-xl font-semibold text-dark-text-primary">Pick the winners</h1>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <button type="button" onClick={handleToggleView}
@@ -905,7 +924,7 @@ function BracketInner() {
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
                 </svg>
-                Expand bracket
+                Expand view
               </>
             ) : (
               <>
@@ -921,10 +940,22 @@ function BracketInner() {
         </div>
       </div>
 
+      {/* Onboarding hint for first-time users */}
+      {showOnboardingHint && (
+        <button type="button" onClick={dismissOnboardingHint}
+          className="w-full text-left mb-4 p-4 rounded-xl bg-amber-900/20 border border-amber-800/40 transition-opacity active:opacity-70">
+          <p className="text-sm font-medium text-dark-text-primary mb-1">{'\u{1F3C6}'} How it works</p>
+          <p className="text-sm text-dark-text-secondary leading-relaxed">
+            Start from the Round of 32. Tap the team you think wins each match. Your picks cascade through to the Final. Share your completed picks with friends.
+          </p>
+          <p className="text-xs text-dark-text-muted mt-2">Tap to dismiss</p>
+        </button>
+      )}
+
       {/* Progress */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-medium text-dark-text-muted tabular-nums">
+          <span className="text-xs font-medium text-dark-text-secondary tabular-nums">
             {decidedMatches} of {totalMatches} matches predicted
           </span>
           {milestoneMsg && (
@@ -934,6 +965,18 @@ function BracketInner() {
         <div className="w-full h-2.5 bg-dark-border rounded-full overflow-hidden">
           <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 ease-out"
             style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-1.5">
+          {decidedMatches >= totalMatches && totalMatches > 0 ? (
+            <button type="button" onClick={handleShare}
+              className="text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors">
+              {'\u{1F389}'} All picks locked in! Share them {'\u{2192}'}
+            </button>
+          ) : (
+            <span className="text-xs text-dark-text-muted">
+              {Math.round(pct)}% complete — keep going!
+            </span>
+          )}
         </div>
       </div>
       {showConfetti && <ConfettiBurst />}
@@ -991,7 +1034,7 @@ function BracketInner() {
             <span className="text-xs text-dark-text-muted">{activeDecided} of {activeMatches.length} decided</span>
           </div>
 
-          <p className="text-xs text-dark-text-muted mb-3">Tap a team name to advance them. Tap a flag for info.</p>
+          <p className="text-sm text-dark-text-secondary mb-3">Tap a team to pick them as the winner. Tap their flag to see squad details.</p>
 
           {isLateRound ? (
             <LazyRoundMatches

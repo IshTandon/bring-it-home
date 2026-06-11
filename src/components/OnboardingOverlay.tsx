@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STEPS = [
   {
-    title: 'Build your bracket',
-    body: 'Pick winners through every round. Share your bracket with the world.',
+    title: 'Pick the winners',
+    body: 'Pick winners through every round. Share your picks with the world.',
     visual: 'bracket',
   },
   {

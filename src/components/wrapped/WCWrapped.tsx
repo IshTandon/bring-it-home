@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { usePredictionStore } from '@/lib/store';
-import { useBracketStore } from '@/lib/store';
+import { usePredictionStore, useBracketStore, useUserPreferencesStore } from '@/lib/store';
+import { FIXTURES, getStadiumById } from '@/lib/fixtures';
+import { TEAMS, PLAYERS } from '@/lib/data';
 
 /* ─── Phase logic ─────────────────────────────────────────── */
 
@@ -327,7 +328,7 @@ function PredictionPreview() {
         Predictions lock when the tournament begins.
       </p>
       <Link href="/bracket" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark-surface text-dark-accent text-sm font-semibold transition-all active:scale-95">
-        Build your bracket →
+        Pick the winners →
       </Link>
     </div>
   );
@@ -356,13 +357,100 @@ function PreTournament() {
   );
 }
 
+/* ─── Fixtures-based "Today's Story" builder ─────────────── */
+
+function buildTodayStory(matchday: number): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayFixtures = FIXTURES.filter(f => f.date === today && f.stage === 'group');
+
+  if (todayFixtures.length === 0) {
+    const nextFixtures = FIXTURES.filter(f => f.date > today && f.stage === 'group').slice(0, 2);
+    if (nextFixtures.length > 0) {
+      const nf = nextFixtures[0];
+      const home = TEAMS.find(t => t.id === nf.homeTeamId);
+      const away = TEAMS.find(t => t.id === nf.awayTeamId);
+      if (home && away) {
+        return `Rest day. Next up: ${home.name} vs ${away.name}. The tournament never sleeps for long.`;
+      }
+    }
+    return 'No matches today. The calm before the storm. Tomorrow, everything changes.';
+  }
+
+  const firstMatch = todayFixtures[0];
+  const home = TEAMS.find(t => t.id === firstMatch.homeTeamId);
+  const away = TEAMS.find(t => t.id === firstMatch.awayTeamId);
+  const stadium = getStadiumById(firstMatch.stadiumId);
+
+  if (!home || !away) {
+    return `Day ${matchday}: ${todayFixtures.length} matches today. The biggest World Cup in history continues.`;
+  }
+
+  const opener = `${home.name} vs ${away.name}${stadium ? ` at ${stadium.name}` : ''}`;
+
+  if (matchday === 1) {
+    return `Day 1: The tournament opens with ${opener}. The biggest World Cup in history begins.`;
+  }
+
+  if (todayFixtures.length === 1) {
+    return `Day ${matchday}: ${opener}. Every match could rewrite the story.`;
+  }
+
+  const others = todayFixtures.slice(1).map(f => {
+    const h = TEAMS.find(t => t.id === f.homeTeamId);
+    const a = TEAMS.find(t => t.id === f.awayTeamId);
+    return h && a ? `${h.name} vs ${a.name}` : null;
+  }).filter(Boolean);
+
+  return `Day ${matchday}: ${opener}. Plus ${others.slice(0, 2).join(', ')}${todayFixtures.length > 3 ? ` and ${todayFixtures.length - 3} more` : ''}. ${todayFixtures.length} matches decide who stays and who goes.`;
+}
+
+/* ─── Progress row for early state ───────────────────────── */
+
+function ProgressRow({ emoji, label, cta, href, current, max }: {
+  emoji: string; label: string; cta: string; href: string; current: number; max: number;
+}) {
+  const pct = max > 0 ? Math.min(100, Math.round((current / max) * 100)) : 0;
+  const filled = current > 0;
+
+  return (
+    <Link href={href} className="flex items-center gap-3 bg-dark-surface border border-dark-border rounded-xl p-4 transition-all hover:border-dark-accent/40 active:scale-[0.98] group">
+      <span className="text-xl shrink-0">{emoji}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between mb-1.5">
+          <span className="text-sm font-medium text-dark-text-primary">
+            {filled ? `${label}: ${current}${max < 10000 ? `/${max}` : ''}` : label}
+          </span>
+          {!filled && (
+            <span className="text-xs text-dark-accent font-medium shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform">
+              {cta} →
+            </span>
+          )}
+          {filled && (
+            <span className="text-xs text-dark-text-muted tabular-nums shrink-0 ml-2">
+              {pct}%
+            </span>
+          )}
+        </div>
+        <div className="h-1.5 bg-dark-border rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${Math.max(pct, filled ? 2 : 0)}%`,
+              background: filled ? 'linear-gradient(90deg, #185FA5, #3B82F6)' : 'transparent',
+            }}
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 /* ─── Phase 2: Live tournament ────────────────────────────── */
 
 function LiveTournament() {
   const { userStats, predictions } = usePredictionStore();
   const { bracket } = useBracketStore();
-  const [narrative, setNarrative] = useState('');
-  const [narrativeLoading, setNarrativeLoading] = useState(true);
+  const fanMode = useUserPreferencesStore(s => s.fanMode);
   const [hydrated, setHydrated] = useState(false);
 
   const matchday = getMatchday();
@@ -371,35 +459,37 @@ function LiveTournament() {
   useEffect(() => {
     usePredictionStore.persist.rehydrate();
     useBracketStore.persist.rehydrate();
+    useUserPreferencesStore.persist.rehydrate();
     setHydrated(true);
   }, []);
 
-  useEffect(() => {
-    fetch('/api/wrapped/narrative', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ day: matchday, date: dateStr, matches: [] }),
-    })
-      .then(r => r.json())
-      .then(d => setNarrative(d.narrative))
-      .catch(() => setNarrative('The tournament writes another chapter. Every match changes everything.'))
-      .finally(() => setNarrativeLoading(false));
-  }, [matchday, dateStr]);
+  const bracketPicks = useMemo(() => {
+    if (!bracket) return 0;
+    const rounds: (keyof typeof bracket)[] = ['r32', 'r16', 'qf', 'sf', 'final'];
+    return rounds.reduce((sum, r) => sum + (bracket[r]?.filter(m => m.winner !== null).length ?? 0), 0);
+  }, [bracket]);
+
+  const totalInteractions = predictions.length + bracketPicks;
+  const isEarlyState = totalInteractions < 5;
+  const totalPlayers = PLAYERS.length;
+
+  const todayStory = useMemo(() => buildTodayStory(matchday), [matchday]);
 
   const handleShare = useCallback(async () => {
     if (typeof window === 'undefined') return;
+    const text = isEarlyState
+      ? `My World Cup 2026 story is just beginning. Day ${matchday}.\nhttps://bring-it-home.vercel.app/wrapped`
+      : `My WC 2026 Day ${matchday}: ${todayStory}\nhttps://bring-it-home.vercel.app/wrapped`;
     try {
       await navigator.share({
         title: `Bring It Home — My Day ${matchday} Wrapped`,
-        text: narrative || 'My World Cup 2026 journey continues.',
+        text,
         url: 'https://bring-it-home.vercel.app/wrapped',
       });
     } catch {
-      try {
-        await navigator.clipboard.writeText(`My WC 2026 Day ${matchday}: ${narrative}\nhttps://bring-it-home.vercel.app/wrapped`);
-      } catch { /* silent */ }
+      try { await navigator.clipboard.writeText(text); } catch { /* silent */ }
     }
-  }, [matchday, narrative]);
+  }, [matchday, todayStory, isEarlyState]);
 
   if (!hydrated) {
     return (
@@ -418,6 +508,9 @@ function LiveTournament() {
 
   const champion = bracket.final[0]?.winner;
 
+  const fanModeLabel = fanMode === 'new' ? 'Casual fan' : fanMode === 'diehard' ? 'Die-hard' : userStats.fanIQLevel;
+  const fanModeEmoji = fanMode === 'new' ? '🌱' : fanMode === 'diehard' ? '🔥' : '🧠';
+
   return (
     <div>
       <div className="mb-6">
@@ -426,38 +519,88 @@ function LiveTournament() {
         <p className="text-xs text-dark-text-muted mt-0.5">{dateStr}</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
-            {userStats.correctPredictions}/{userStats.totalPredictions}
-          </span>
-          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Correct picks</span>
-        </div>
-        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-dark-accent block tabular-nums">{accuracy}%</span>
-          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Accuracy</span>
-        </div>
-        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
-          <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
-            {userStats.streak} 🔥
-          </span>
-          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Streak</span>
-        </div>
-        <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
-          <span className="text-lg font-bold text-dark-text-primary block leading-tight">{userStats.fanIQLevel}</span>
-          <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Fan IQ</span>
-        </div>
-      </div>
+      {isEarlyState ? (
+        <>
+          {/* Early-tournament: "Your story is just beginning" */}
+          <div className="rounded-xl bg-gradient-to-br from-[#0A1628] to-[#112240] border border-dark-border p-5 mb-6 text-center">
+            <p className="text-3xl mb-2">📖</p>
+            <p className="text-sm font-semibold text-white mb-1">Your story is just beginning</p>
+            <p className="text-xs text-white/50">
+              {totalInteractions === 0
+                ? 'Dive in. Every prediction, every bracket pick, every player you scout writes your World Cup story.'
+                : `${totalInteractions} move${totalInteractions !== 1 ? 's' : ''} made. Keep going — your tournament is taking shape.`}
+            </p>
+          </div>
 
-      {/* Narrative card */}
+          <div className="space-y-3 mb-6">
+            <ProgressRow
+              emoji="📋"
+              label="Predictions"
+              cta="Make your first pick"
+              href="/schedule"
+              current={predictions.length}
+              max={72}
+            />
+            <ProgressRow
+              emoji="🏆"
+              label="My Picks"
+              cta="Build your knockout bracket"
+              href="/bracket"
+              current={bracketPicks}
+              max={31}
+            />
+            <ProgressRow
+              emoji="🌀"
+              label="Chaos Mode"
+              cta="Explore group scenarios"
+              href="/groups?section=chaos"
+              current={0}
+              max={1}
+            />
+            <ProgressRow
+              emoji="👀"
+              label="Players scouted"
+              cta={`0/${totalPlayers}`}
+              href="/players"
+              current={0}
+              max={totalPlayers}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Active user: real stats */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+              <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
+                {userStats.correctPredictions}/{userStats.totalPredictions}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Correct picks</span>
+            </div>
+            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+              <span className="text-3xl font-bold text-dark-accent block tabular-nums">{accuracy}%</span>
+              <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Accuracy</span>
+            </div>
+            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+              <span className="text-3xl font-bold text-dark-text-primary block tabular-nums">
+                {userStats.streak} 🔥
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Streak</span>
+            </div>
+            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-center">
+              <span className="text-lg font-bold text-dark-text-primary block leading-tight">
+                {fanModeEmoji} {fanModeLabel}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-dark-text-muted mt-1 block">Fan mode</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Today's Story — dynamic from fixtures */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-5 mb-6">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">Today&apos;s story</p>
-        {narrativeLoading ? (
-          <div className="h-12 bg-dark-surface/10 rounded animate-pulse" />
-        ) : (
-          <p className="text-sm text-white/90 leading-relaxed mb-4">{narrative}</p>
-        )}
+        <p className="text-sm text-white/90 leading-relaxed mb-4">{todayStory}</p>
         <button type="button" onClick={handleShare}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-dark-surface/10 text-white text-xs font-medium active:bg-dark-surface/20 transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -487,15 +630,15 @@ function LiveTournament() {
         <div className="bg-blue-900/20 border border-blue-800/50 rounded-xl p-4 text-center mb-6">
           <p className="text-sm text-dark-accent font-medium mb-2">You haven&apos;t picked a champion yet.</p>
           <Link href="/bracket" className="btn-primary text-xs px-5 py-2">
-            Build your bracket →
+            Pick the winners →
           </Link>
         </div>
       )}
 
-      {predictions.length === 0 && (
+      {!isEarlyState && predictions.length === 0 && (
         <div className="text-center py-6">
           <p className="text-sm text-dark-text-muted mb-2">No predictions yet. Start picking winners.</p>
-          <Link href="/bracket" className="text-sm text-dark-accent font-medium">Go to bracket →</Link>
+          <Link href="/bracket" className="text-sm text-dark-accent font-medium">Go to My Picks →</Link>
         </div>
       )}
     </div>

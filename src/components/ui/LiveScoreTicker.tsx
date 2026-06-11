@@ -59,12 +59,7 @@ export default function LiveScoreTicker() {
   }
 
   if (!matches.length) {
-    return (
-      <div className="mb-6 rounded-2xl px-5 py-3 flex items-center gap-3" style={{ background: 'rgba(17, 24, 39, 0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
-        <p className="text-sm text-gray-400">No matches today. The tournament continues soon.</p>
-      </div>
-    );
+    return null;
   }
 
   return (

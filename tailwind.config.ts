@@ -21,6 +21,7 @@ module.exports = {
           accent: '#c9a84c',
           'accent-hover': '#e0c068',
           'text-primary': '#f9fafb',
+          'text-secondary': '#d1d5db',
           'text-muted': '#6b7280',
         },
       },

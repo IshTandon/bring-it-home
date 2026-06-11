@@ -428,7 +428,7 @@ export default function FormatPage() {
             href="/bracket"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors border border-white/20"
           >
-            Build your bracket →
+            Pick the winners →
           </Link>
         </div>
       </section>

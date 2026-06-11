@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { TOURNAMENT_HISTORY, ALL_TIME_TOP_SCORERS } from '@/lib/data';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import type { TournamentHistoryEntry, TournamentHistoryTeam } from '@/lib/data';
 
 type SortKey = 'goals' | 'assists' | 'rating';
@@ -346,6 +347,11 @@ export default function HistoricalData() {
         <h1 className="text-xl font-semibold text-dark-text-primary">World Cup History</h1>
         <p className="text-xs text-dark-text-muted mt-0.5">Champions, legends, and numbers that shaped the game.</p>
       </div>
+
+      <FeatureExplainer
+        featureId="history-records"
+        text="All-time World Cup records going back to 1930. Scroll down for individual tournament breakdowns."
+      />
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-1 px-1">
         {YEARS.map(y => (

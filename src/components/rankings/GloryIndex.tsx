@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TEAMS } from '@/lib/data';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import type { Match, Team } from '@/types';
 
 const KNOCKOUT_ROUNDS = ['Round of 32', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
@@ -325,6 +326,11 @@ export default function GloryIndex() {
           {phaseLabel} · Updates after every match
         </span>
       </div>
+
+      <FeatureExplainer
+        featureId="rankings-glory-index"
+        text="The Glory Index rates all 48 teams on a 0-100 scale based on squad strength, form, and tournament history."
+      />
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mb-4 text-[10px]">

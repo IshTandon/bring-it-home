@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { PLAYERS } from '@/lib/data';
 import PlayerCard from './PlayerCard';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import type { Player } from '@/types';
 
 const ComparisonPanel = dynamic(() => import('./ComparisonPanel'), { ssr: false });
@@ -163,6 +164,11 @@ export default function PlayerGrid() {
           <ComparisonPanel playerA={compared[0]} playerB={compared[1]} onClear={handleClearCompare} />
         </div>
       )}
+
+      <FeatureExplainer
+        featureId="players-intro"
+        text="Every player has FIFA-style stats. Tap Compare on any two players to see them side-by-side on a radar chart."
+      />
 
       <div className="relative mb-3">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

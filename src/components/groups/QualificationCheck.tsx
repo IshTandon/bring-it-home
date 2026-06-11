@@ -17,7 +17,7 @@ interface QualificationCheckProps {
 function CollapsibleSection({
   title,
   items,
-  defaultExpanded = true,
+  defaultExpanded = false,
   accentClass,
 }: {
   title: string;

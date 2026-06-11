@@ -10,7 +10,22 @@ import FeatureShowcase from '@/components/home/FeatureShowcase';
 import { useLiveMatches } from '@/hooks/useLiveMatches';
 import { useBracketStore, useUserPreferencesStore } from '@/lib/store';
 import { TEAMS, MOCK_GROUPS } from '@/lib/data';
+import { getNextFixture, getNextFixtureForTeam, getStadiumById, FIXTURES } from '@/lib/fixtures';
+import type { Fixture } from '@/lib/fixtures';
 import type { BracketState } from '@/types';
+
+function getFixtureDisplay(f: Fixture) {
+  const home = TEAMS.find(t => t.id === f.homeTeamId);
+  const away = TEAMS.find(t => t.id === f.awayTeamId);
+  const stadium = getStadiumById(f.stadiumId);
+  return {
+    homeTeamFlag: home?.flag ?? '🏳️',
+    homeTeamName: home?.name ?? f.label?.split(' vs ')[0] ?? 'TBD',
+    awayTeamFlag: away?.flag ?? '🏳️',
+    awayTeamName: away?.name ?? f.label?.split(' vs ')[1] ?? 'TBD',
+    stadium: stadium?.name ?? f.stadiumId,
+  };
+}
 
 /* ─── Last Updated ──────────────────────────────────────── */
 
@@ -42,56 +57,164 @@ function LastUpdated() {
 
 /* ─── Next Match Countdown ──────────────────────────────── */
 
-function NextMatchCountdown() {
-  const { matches } = useLiveMatches();
-  const [countdown, setCountdown] = useState('');
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-  const nextMatch = useMemo(() => {
-    const upcoming = matches.filter(m => m.status === 'NS');
-    if (upcoming.length === 0) return null;
-    return upcoming[0];
-  }, [matches]);
+type CountdownDisplay =
+  | { type: 'countdown'; fixture: Fixture; label: string; h: number; m: number; s: number }
+  | { type: 'live'; fixture: Fixture }
+  | { type: 'complete' };
+
+function kickoffOf(f: Fixture) {
+  return new Date(`${f.date}T${f.time}:00Z`).getTime();
+}
+
+function NextMatchCountdown() {
+  const favoriteTeamId = useUserPreferencesStore(s => s.favoriteTeamId);
+  const champion = useBracketStore(s => s.bracket.final[0]?.winner);
+  const [mounted, setMounted] = useState(false);
+  const [display, setDisplay] = useState<CountdownDisplay>({ type: 'complete' });
 
   useEffect(() => {
-    if (!nextMatch) return;
-    const update = () => {
-      const matchTime = new Date(`${nextMatch.date}T${nextMatch.time?.replace(' ET', ':00') || '00:00:00'}`);
-      const diff = matchTime.getTime() - Date.now();
-      if (diff <= 0) {
-        setCountdown('Starting soon');
+    useUserPreferencesStore.persist.rehydrate();
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    function tick() {
+      const now = Date.now();
+      const hasFav = favoriteTeamId != null && favoriteTeamId !== 'skipped';
+
+      const liveMatches = FIXTURES
+        .filter(f => {
+          const elapsed = now - kickoffOf(f);
+          return elapsed >= 0 && elapsed < TWO_HOURS_MS;
+        })
+        .sort((a, b) => kickoffOf(b) - kickoffOf(a));
+
+      let liveFixture: Fixture | undefined;
+      if (hasFav) {
+        liveFixture = liveMatches.find(
+          f => f.homeTeamId === favoriteTeamId || f.awayTeamId === favoriteTeamId
+        );
+      }
+      if (!liveFixture) liveFixture = liveMatches[0];
+
+      if (liveFixture) {
+        setDisplay({ type: 'live', fixture: liveFixture });
         return;
       }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      setCountdown(`in ${h}h ${m}m`);
-    };
-    update();
-    const id = setInterval(update, 60000);
+
+      let nextFixture: Fixture | undefined;
+      let label = 'Next up';
+
+      if (hasFav) {
+        const teamNext = getNextFixtureForTeam(favoriteTeamId!, new Date(now));
+        if (teamNext && kickoffOf(teamNext) - now <= THREE_DAYS_MS) {
+          nextFixture = teamNext;
+          label = 'Your next match';
+        }
+      }
+      if (!nextFixture) {
+        nextFixture = getNextFixture(new Date(now));
+      }
+
+      if (nextFixture) {
+        const diff = kickoffOf(nextFixture) - now;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setDisplay({ type: 'countdown', fixture: nextFixture, label, h, m, s });
+        return;
+      }
+
+      setDisplay({ type: 'complete' });
+    }
+
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [nextMatch]);
+  }, [mounted, favoriteTeamId]);
 
-  const hasLive = matches.some(m => m.status !== 'NS' && m.status !== 'FT' && m.status !== 'AET' && m.status !== 'PEN');
+  if (!mounted) return null;
 
-  if (hasLive) return null;
-
-  if (!nextMatch) {
+  if (display.type === 'complete') {
     return (
-      <div className="mb-4 bg-dark-surface border border-dark-border rounded-xl p-3 flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-gray-600" />
-        <p className="text-sm text-dark-text-muted">No matches scheduled. The tournament continues soon.</p>
-      </div>
+      <Link href="/schedule" className="block">
+        <div className="mb-6 bg-dark-surface border border-dark-border rounded-xl p-6 text-center space-y-2 transition-colors hover:border-dark-accent/30">
+          <p className="text-2xl">🏆</p>
+          <p className="text-lg font-bold text-dark-text-primary">Tournament complete</p>
+          {champion && (
+            <p className="text-sm text-dark-accent font-medium">
+              {champion.flag} {champion.name} brought it home.
+            </p>
+          )}
+          <p className="text-xs text-dark-text-muted mt-3">
+            FIFA World Cup 2026 · USA · Canada · Mexico · 48 teams · 104 matches
+          </p>
+        </div>
+      </Link>
     );
   }
 
+  if (display.type === 'live') {
+    const info = getFixtureDisplay(display.fixture);
+    return (
+      <Link href="/schedule" className="block">
+        <div className="mb-6 bg-dark-surface border border-red-500/30 rounded-xl p-5 text-center space-y-3 transition-colors hover:border-red-500/50">
+          <div className="flex items-center justify-center gap-2">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-red-400">Live</span>
+          </div>
+          <p className="text-lg font-bold text-dark-text-primary">
+            {info.homeTeamFlag} {info.homeTeamName} vs {info.awayTeamName} {info.awayTeamFlag}
+          </p>
+          <p className="text-xs text-dark-text-muted">
+            {display.fixture.group && `${display.fixture.group} · `}{info.stadium}
+          </p>
+        </div>
+      </Link>
+    );
+  }
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const info = getFixtureDisplay(display.fixture);
+
   return (
-    <div className="mb-4 bg-dark-surface border border-dark-border rounded-xl p-3 flex items-center gap-3">
-      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-      <p className="text-sm text-dark-text-primary">
-        <span className="text-dark-text-muted">Next: </span>
-        <span className="font-medium">{nextMatch.homeTeam.flag} {nextMatch.homeTeam.name} vs {nextMatch.awayTeam.name} {nextMatch.awayTeam.flag}</span>
-        <span className="text-dark-accent ml-1.5 font-medium">{countdown}</span>
-      </p>
-    </div>
+    <Link href="/schedule" className="block">
+      <div className="mb-6 bg-dark-surface border border-dark-border rounded-xl p-5 text-center space-y-3 transition-colors hover:border-dark-accent/30">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-dark-accent/70">
+          {display.label}
+        </p>
+        <p className="text-lg font-bold text-dark-text-primary">
+          {info.homeTeamFlag} {info.homeTeamName} vs {info.awayTeamName} {info.awayTeamFlag}
+        </p>
+        <p className="text-xs text-dark-text-muted">
+          {display.fixture.group && `${display.fixture.group} · `}{info.stadium}
+        </p>
+        <div className="flex items-center justify-center gap-1 tabular-nums">
+          <span className="bg-dark-bg text-dark-text-primary text-xl font-bold px-3 py-1.5 rounded-lg">
+            {pad(display.h)}
+          </span>
+          <span className="text-dark-text-muted font-bold text-lg">:</span>
+          <span className="bg-dark-bg text-dark-text-primary text-xl font-bold px-3 py-1.5 rounded-lg">
+            {pad(display.m)}
+          </span>
+          <span className="text-dark-text-muted font-bold text-lg">:</span>
+          <span className="bg-dark-bg text-dark-text-primary text-xl font-bold px-3 py-1.5 rounded-lg">
+            {pad(display.s)}
+          </span>
+        </div>
+        <p className="text-[10px] text-dark-text-muted pt-1">
+          FIFA World Cup 2026 · USA · Canada · Mexico · 48 teams · 104 matches
+        </p>
+      </div>
+    </Link>
   );
 }
 
@@ -180,7 +303,7 @@ function YourTeamCard() {
         href="/bracket"
         className="shrink-0 text-xs text-dark-accent font-medium hover:text-dark-accent-hover transition-colors"
       >
-        View bracket →
+        View picks →
       </Link>
     </div>
   );
@@ -217,9 +340,9 @@ function BracketSnapshot() {
       <div className="bg-dark-surface border border-dark-border rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🏆</span>
-          <h3 className="text-sm font-semibold text-dark-text-primary">My Bracket</h3>
+          <h3 className="text-sm font-semibold text-dark-text-primary">My Picks</h3>
         </div>
-        <p className="text-sm text-dark-text-muted mb-3">You haven&apos;t started your bracket yet.</p>
+        <p className="text-sm text-dark-text-muted mb-3">You haven&apos;t made any picks yet.</p>
         <Link href="/bracket" className="btn-primary text-xs py-2 px-4">
           Start picking →
         </Link>
@@ -232,7 +355,7 @@ function BracketSnapshot() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">🏆</span>
-          <h3 className="text-sm font-semibold text-dark-text-primary">My Bracket</h3>
+          <h3 className="text-sm font-semibold text-dark-text-primary">My Picks</h3>
         </div>
         <Link href="/bracket" className="text-xs text-dark-accent font-medium">
           Continue →
@@ -433,17 +556,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. Your team (only when champion is picked) */}
+      {/* 3. Match status strip / countdown */}
+      <NextMatchCountdown />
+
+      {/* 4. Your team (only when champion is picked) */}
       <YourTeamCard />
 
-      {/* 4. Streak nudge */}
+      {/* 5. Streak nudge */}
       <StreakNudgeBanner />
 
-      {/* 5. Daily prediction */}
+      {/* 6. Daily prediction */}
       <DailyPredictionWidget />
-
-      {/* 6. Match status strip / countdown */}
-      <NextMatchCountdown />
 
       {/* 7. Feature showcase — the main draw */}
       <FeatureShowcase />

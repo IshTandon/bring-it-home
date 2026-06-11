@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { MOCK_GROUPS } from '@/lib/data';
-import { useUserPreferencesStore } from '@/lib/store';
+import { useUserPreferencesStore, useGroupSimulationStore } from '@/lib/store';
 import QualificationCheck from '@/components/groups/QualificationCheck';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import type { MatchResult } from '@/lib/qualification-calc';
 
 function GroupsSkeleton() {
@@ -62,8 +63,12 @@ function QualificationPanel() {
   }, []);
 
   const group = MOCK_GROUPS[groupIdx];
+  const simulatedResults = useGroupSimulationStore(s => s.simulatedResults[group.id]);
 
   const playedResults: MatchResult[] = useMemo(() => {
+    if (simulatedResults) {
+      return simulatedResults.filter(r => r.result !== null) as MatchResult[];
+    }
     return group.matches
       .filter(m => m.status === 'FT' || m.status === 'AET' || m.status === 'PEN')
       .map(m => {
@@ -73,11 +78,17 @@ function QualificationPanel() {
           hs > as ? 'home' : hs < as ? 'away' : 'draw';
         return { matchId: m.id, result, homeScore: hs, awayScore: as };
       });
-  }, [group]);
+  }, [group, simulatedResults]);
 
   const remainingMatches = useMemo(() => {
+    if (simulatedResults) {
+      const decidedIds = new Set(
+        simulatedResults.filter(r => r.result !== null).map(r => r.matchId)
+      );
+      return group.matches.filter(m => !decidedIds.has(m.id));
+    }
     return group.matches.filter(m => m.status === 'NS');
-  }, [group]);
+  }, [group, simulatedResults]);
 
   const handleGroupChange = (idx: number) => {
     setGroupIdx(idx);
@@ -85,12 +96,13 @@ function QualificationPanel() {
   };
 
   return (
-    <div className="mb-6 space-y-3">
+    <div className="space-y-3">
       <div>
         <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">
           Qualification check
         </p>
         <h2 className="text-lg font-semibold text-dark-text-primary">Can they make it?</h2>
+        <p className="text-xs text-dark-text-muted mt-1">Pick a team to see every path to qualification</p>
       </div>
 
       {/* Group selector */}
@@ -130,6 +142,11 @@ function QualificationPanel() {
         ))}
       </div>
 
+      <FeatureExplainer
+        featureId="groups-qualification"
+        text="Each group has 4 teams. The top 2 qualify automatically. Some third-placed teams also sneak through."
+      />
+
       <QualificationCheck
         teamId={selectedTeamId}
         group={group}
@@ -141,10 +158,32 @@ function QualificationPanel() {
 }
 
 export default function GroupsPage() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (!section) return;
+
+    const validSections = ['qualification', 'chaos', 'simulator'];
+    if (!validSections.includes(section)) return;
+
+    const timer = setTimeout(() => {
+      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
+
   return (
     <div>
-      <QualificationPanel />
-      <IfThisHappens />
+      <div id="qualification">
+        <QualificationPanel />
+      </div>
+
+      <div className="border-t border-dark-border py-8">
+        <div id="simulator">
+          <IfThisHappens />
+        </div>
+      </div>
     </div>
   );
 }

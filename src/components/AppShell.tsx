@@ -8,6 +8,7 @@ import SplashScreen from './SplashScreen';
 import OnboardingOverlay from './OnboardingOverlay';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
 import StreakBadge from '@/components/ui/StreakBadge';
+import BottomNav from '@/components/nav/BottomNav';
 
 const ACTIVE_COLOR = '#f59e0b';
 const INACTIVE_COLOR = '#6b7280';
@@ -15,7 +16,7 @@ const INACTIVE_COLOR = '#6b7280';
 const NAV_LINKS = [
   { href: '/',         label: 'Home',             icon: '🏠' },
   { href: '/format',   label: 'How It Works',     icon: '🗺️' },
-  { href: '/bracket',  label: 'Bracket',          icon: '🏆' },
+  { href: '/bracket',  label: 'My Picks',          icon: '🏆' },
   { href: '/players',  label: 'Players',          icon: '⚽' },
   { href: '/groups',   label: 'Groups',           icon: '📊' },
   { href: '/rankings', label: 'Glory Index',      icon: '📈' },
@@ -28,7 +29,7 @@ const NAV_LINKS = [
 
 const DESKTOP_NAV = [
   { href: '/',         label: 'Home' },
-  { href: '/bracket',  label: 'Bracket' },
+  { href: '/bracket',  label: 'My Picks' },
   { href: '/players',  label: 'Players' },
   { href: '/groups',   label: 'Groups' },
   { href: '/format',   label: 'Format' },
@@ -153,9 +154,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* Main content */}
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-4 py-6 pb-20 md:pb-6">
         {children}
       </main>
+
+      {/* Bottom tab bar — mobile only */}
+      <BottomNav />
 
       {/* Left-side drawer — mobile */}
       <AnimatePresence>

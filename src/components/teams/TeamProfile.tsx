@@ -720,7 +720,7 @@ export default function TeamProfile({ teamId }: { teamId: string }) {
         </div>
         <h2 className="text-lg font-semibold text-dark-text-primary mb-1">Team not found</h2>
         <p className="text-sm text-dark-text-muted mb-4">We couldn&apos;t find a team with that ID.</p>
-        <Link href="/bracket" className="btn-primary text-sm px-5 py-2">Back to bracket</Link>
+        <Link href="/bracket" className="btn-primary text-sm px-5 py-2">Back to My Picks</Link>
       </div>
     );
   }

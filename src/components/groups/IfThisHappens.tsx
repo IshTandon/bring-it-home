@@ -6,7 +6,8 @@ import { MOCK_GROUPS } from '@/lib/data';
 import { computeStandings, defaultResults } from '@/lib/qualification-calc';
 import type { MatchResult, Result } from '@/lib/qualification-calc';
 import type { Match, StandingRow, Group } from '@/types';
-import { useUserPreferencesStore } from '@/lib/store';
+import { useUserPreferencesStore, useGroupSimulationStore } from '@/lib/store';
+import FeatureExplainer from '@/components/ui/FeatureExplainer';
 import ChaosMode from './ChaosMode';
 
 type StandingsMode = 'short' | 'full';
@@ -186,6 +187,11 @@ function StandingsTable({ standings, mode }: { standings: StandingRow[]; mode: S
 
 function GroupSection({ group, mode, onModeChange }: { group: Group; mode: StandingsMode; onModeChange: (m: StandingsMode) => void }) {
   const [results, setResults] = useState<MatchResult[]>(() => defaultResults(group.matches));
+  const setGroupResults = useGroupSimulationStore(s => s.setGroupResults);
+
+  useEffect(() => {
+    setGroupResults(group.id, results);
+  }, [group.id, results, setGroupResults]);
 
   const handleChange = useCallback((matchIdx: number, result: Result | null) => {
     setResults(prev => {
@@ -284,13 +290,18 @@ export default function IfThisHappens() {
       <div className="mb-4">
         <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-0.5">Group stage simulator</p>
         <h1 className="text-xl font-semibold text-dark-text-primary">If This Happens...</h1>
-        <p className="text-xs text-dark-text-muted mt-1">Toggle match results. Watch the table change.</p>
+        <p className="text-xs text-dark-text-muted mt-1">Set your own results for each match and watch the standings update live</p>
         {fanMode === 'new' && (
           <p className="text-[11px] text-dark-accent/80 mt-1">
             Tap a result for each match to see how the group table changes.
           </p>
         )}
       </div>
+
+      <FeatureExplainer
+        featureId="groups-if-this-happens"
+        text="Tap Home win, Draw, or Away win for each match. The table updates instantly — try different combinations!"
+      />
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">
         {MOCK_GROUPS.map((group, idx) => (
@@ -308,7 +319,15 @@ export default function IfThisHappens() {
       <GroupSection key={MOCK_GROUPS[activeGroupIdx].id} group={MOCK_GROUPS[activeGroupIdx]}
         mode={mode} onModeChange={handleModeChange} />
 
-      <div className="mt-6 pt-6 border-t border-dark-border/50">
+      <div id="chaos" className="border-t border-dark-border py-8">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-dark-text-primary">Chaos Mode</h2>
+          <p className="text-xs text-dark-text-muted mt-1">Let the app generate a random future — who survives?</p>
+        </div>
+        <FeatureExplainer
+          featureId="groups-chaos-mode"
+          text="This generates random realistic results. Tap Randomize over and over to see different futures for the group."
+        />
         <ChaosMode key={`chaos-${MOCK_GROUPS[activeGroupIdx].id}`} group={MOCK_GROUPS[activeGroupIdx]} />
       </div>
     </div>

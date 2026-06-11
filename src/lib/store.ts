@@ -210,6 +210,24 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
   )
 );
 
+// ─── Group Simulation Store ───────────────────────────────
+import type { MatchResult } from '@/lib/qualification-calc';
+
+interface GroupSimulationStore {
+  simulatedResults: Record<string, MatchResult[]>;
+  setGroupResults: (groupId: string, results: MatchResult[]) => void;
+}
+
+export const useGroupSimulationStore = create<GroupSimulationStore>()(
+  (set) => ({
+    simulatedResults: {},
+    setGroupResults: (groupId, results) =>
+      set(state => ({
+        simulatedResults: { ...state.simulatedResults, [groupId]: results },
+      })),
+  })
+);
+
 // ─── Predictions Store ────────────────────────────────────
 interface PredictionStore {
   predictions: Prediction[];

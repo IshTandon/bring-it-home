@@ -121,19 +121,12 @@ export default function ChaosMode({ group }: { group: Group }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h2 className="text-base font-semibold text-dark-text-primary">🌀 Chaos Mode</h2>
-        <p className="text-xs text-dark-text-muted">Spin a random future for this group</p>
-        {fanMode === 'new' && (
-          <p className="text-[11px] text-dark-accent/80 mt-1">
-            Every tap simulates one possible ending to the group.
-          </p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="space-y-3">
+      {/* Random Timeline card */}
+      <div className="bg-dark-surface border border-dark-border rounded-xl p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-dark-text-primary">🎲 Random Timeline</h3>
+          <p className="text-xs text-dark-text-muted mt-0.5">Generate a random set of results and see who qualifies</p>
+        </div>
         <button
           type="button"
           onClick={handleRandomize}
@@ -142,52 +135,58 @@ export default function ChaosMode({ group }: { group: Group }) {
         >
           🎲 Randomize
         </button>
+      </div>
 
-        {/* Nightmare team selector */}
+      {/* Nightmare Scenario card */}
+      <div className="bg-dark-surface border border-dark-border rounded-xl p-4 space-y-3">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-widest text-dark-text-muted mb-1.5">
-            Pick a team for the nightmare
-          </p>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {group.teams.map(team => (
-              <button
-                key={team.id}
-                type="button"
-                onClick={() => setSelectedTeamId(prev => (prev === team.id ? null : team.id))}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95
-                  ${selectedTeamId === team.id
-                    ? 'bg-red-900/40 text-red-300 border border-red-500/50'
-                    : 'bg-dark-surface text-dark-text-muted border border-dark-border hover:border-dark-text-muted/30'}
-                `}
-              >
-                <span>{team.flag}</span>
-                <span className="hidden min-[420px]:inline">{team.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {selectedTeamId && (
-            <button
-              type="button"
-              onClick={handleNightmare}
-              disabled={allPlayed}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg
-                         cursor-pointer transition-all active:scale-95 w-full justify-center
-                         border border-red-500/40 text-red-400
-                         hover:bg-red-900/10 hover:border-red-400/60 hover:text-red-300
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              😈 Show me the nightmare
-            </button>
-          )}
+          <h3 className="text-sm font-semibold text-dark-text-primary">😈 Nightmare Scenario</h3>
+          <p className="text-xs text-dark-text-muted mt-0.5">Pick a team. We'll find the darkest timeline where they get eliminated.</p>
         </div>
-
-        {allPlayed && (
-          <p className="text-xs text-dark-text-muted text-center py-2">
-            All matches played — no chaos left to spin.
-          </p>
+        <div className="flex flex-wrap gap-2">
+          {group.teams.map(team => (
+            <button
+              key={team.id}
+              type="button"
+              onClick={() => setSelectedTeamId(prev => (prev === team.id ? null : team.id))}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95
+                ${selectedTeamId === team.id
+                  ? 'bg-red-900/40 text-red-300 border border-red-500/50'
+                  : 'bg-dark-surface text-dark-text-muted border border-dark-border hover:border-dark-text-muted/30'}
+              `}
+            >
+              <span>{team.flag}</span>
+              <span className="hidden min-[420px]:inline">{team.name}</span>
+            </button>
+          ))}
+        </div>
+        {selectedTeamId && (
+          <button
+            type="button"
+            onClick={handleNightmare}
+            disabled={allPlayed}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg
+                       cursor-pointer transition-all active:scale-95 w-full justify-center
+                       border border-red-500/40 text-red-400
+                       hover:bg-red-900/10 hover:border-red-400/60 hover:text-red-300
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            😈 Show me the nightmare
+          </button>
         )}
       </div>
+
+      {allPlayed && (
+        <p className="text-xs text-dark-text-muted text-center py-2">
+          All matches played — no chaos left to spin.
+        </p>
+      )}
+
+      {fanMode === 'new' && (
+        <p className="text-[11px] text-dark-accent/80">
+          Every tap simulates one possible ending to the group.
+        </p>
+      )}
 
       {/* Scenario results */}
       {scenario && (
